@@ -12,6 +12,10 @@ using namespace std;
 #define WIDTH 640
 #define HEIGHT 480
 
+// Blocks and threads
+#define THREADS_PER_BLOCKS 2
+#define BLOCKS 4
+
 // List of creatures
 vector<creature> creatures;
 
@@ -42,9 +46,7 @@ int main(int argc, char** argv) {
     bmp.darken(0.92);
 
     // Draw creatures
-    for(int i = 0; i < creatures.size(); i++) {
-      drawCreature(&bmp, creatures[i]);
-    }
+    drawCreature(&bmp, creatures[i]);
     
     // Display the rendered frame
     ui.display(bmp);
@@ -56,6 +58,9 @@ int main(int argc, char** argv) {
 // Draw a circle at the given creature's position
 // Uses method from http://groups.csail.mit.edu/graphics/classes/6.837/F98/Lecture6/circle.html
 void drawCreature(bitmap* bmp, creature c) {
+  // Index of the creature? Have a struct of creatures? how do we make this GPU compatible
+  // int index = blockIdx.x * THREADS_PER_BLOCK + threadIdx.x;
+
   double center_x = c.pos().x();
   double center_y = c.pos().y();
   double radius = c.radius();
