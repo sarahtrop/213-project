@@ -46,10 +46,10 @@ public:
   }
 
   // Get the food source of this creature
-  int food_source() { return _food_source; }
+  int food_source() { return food_source; }
   
   // Get the radius of this creature
-  double radius() { return _binaryToInt(size); } // TODO: write binaryToDec
+  double radius() { return (binaryToInt(size) / 255.0) * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS; }
 
   /*
   // Merge two stars

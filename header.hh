@@ -3,6 +3,9 @@
 
 #include <cmath>
 
+#define MAX_RADIUS 50
+#define MIN_RADIUS 10
+
 int binaryToInt(int arr[8]) {
   int result = 0;
   
@@ -14,6 +17,5 @@ int binaryToInt(int arr[8]) {
   
   return result;
 }
-
 
 #endif
