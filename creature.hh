@@ -1,8 +1,12 @@
 #if !defined(CREATURE_HH)
 #define CREATURE_HH
 
-#define MAX_RADIUS 50
-#define MIN_RADIUS 10
+#define MAX_RADIUS 20
+#define MIN_RADIUS 6
+#define FPS 50
+// Screen size
+#define WIDTH 960
+#define HEIGHT 720
 
 #include <cmath>
 #include <ctime>
@@ -11,15 +15,14 @@
 
 class creature {
 public:
-  // Create a new star with a given position and velocity
-  creature(int food_source, uint8_t color, uint8_t size, uint8_t speed, uint8_t energy, uint8_t vision, vec2d pos) : 
+  
+  creature(int food_source, uint8_t color, uint8_t size, uint8_t speed, uint8_t energy, uint8_t vision) : 
     _food_source(food_source),
     _size(size),
     _speed(speed),
     _energy(energy),
     _vision(vision),
-    _color(color),
-    _pos(pos) {}
+    _color(color){}
   
   /*
   // Update this star's position with a given force and a change in time
@@ -59,6 +62,46 @@ public:
   // Get the radius of this creature
   double radius() { return (_size / 255.0) * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS; }
 
+  double speed() { return (_speed / FPS); }
+
+  //Randomly sets the position of the creature within passed bounds
+  void setPos(){
+    _pos = vec2d(rand() % (WIDTH - (int)ceil(2*radius())) + radius(), rand() % (HEIGHT - (int)ceil(2*radius())) + radius());
+  }
+
+  //Sets the position to the given position
+  void setPos(vec2d pos){
+    _pos = pos; 
+  }
+
+  void setVel(){
+    double dir = rand() * 2 * 3.141;
+    double x = speed() * cos(dir);
+    double y = speed() * sin(dir);
+    _vel = vec2d(x,y);
+  }
+
+  void setVel(vec2d vel){
+    _vel = vel;
+  }
+
+  void update(){
+    if(_pos.y()-radius() < 0 && _vel.y() < 0){
+      setVel(vec2d(_vel.x(), -1*_vel.y()));
+    }
+    if(_pos.x()-radius() < 0 && _vel.x() < 0){
+      setVel(vec2d(-1*_vel.x(), _vel.y()));
+    }
+    if(_pos.y()+radius() > HEIGHT && _vel.y() > 0){
+      setVel(vec2d(_vel.x(), -1*_vel.y()));
+    }
+    if(_pos.x()+radius() > WIDTH && _vel.x() > 0){
+      setVel(vec2d(-1*_vel.x(), _vel.y()));
+    }
+    
+    _pos += _vel;
+  }
+
   /*
   // Merge two stars
   star merge(star other) {
@@ -80,6 +123,9 @@ private:
   vec2d _pos;         // The position of this creature
   vec2d _prev_pos;    // The previous position of this creature
   vec2d _vel;         // The velocity of this creature
+
+  double _act_size;
+  double _curr_energy;
   
   int _food_source;    // Herbivore (0) or carnivore (1)
   uint8_t _color;       // Color of the creature
