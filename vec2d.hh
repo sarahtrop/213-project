@@ -1,9 +1,11 @@
 #ifndef VEC2D_HH
 #define VEC2D_HH
 
+//vec2d.hh
 #include <cmath>
 
 #include "bitmap.hh"
+
 
 class vec2d {
 public:

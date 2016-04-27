@@ -1,17 +1,25 @@
 #if !defined(CREATURE_HH)
 #define CREATURE_HH
 
+#define MAX_RADIUS 50
+#define MIN_RADIUS 10
+
 #include <cmath>
+#include <ctime>
 #include "vec2d.hh"
 #include "header.hh"
 
 class creature {
 public:
   // Create a new star with a given position and velocity
-  creature(vec2d pos, vec2d vel, int color[8]) : 
-      _pos(pos),
-      _vel(vel),
-      _color(color) {}
+  creature(int food_source, uint8_t color, uint8_t size, uint8_t speed, uint8_t energy, uint8_t vision) : 
+    _food_source(food_source),
+    _size(size),
+    _speed(speed),
+    _energy(energy),
+    _vision(vision),
+    _color(color) {}
+  
   /*
   // Update this star's position with a given force and a change in time
   void update(double dt) {
@@ -41,15 +49,14 @@ public:
   
   // Get the color of this creature
   rgb32 color() {
-    int intColor = binaryToInt(color);
-    return rgb32(intColor, intColor, intColor);
+    return rgb32((int)_color, (int)_color, (int)_color);
   }
 
   // Get the food source of this creature
-  int food_source() { return food_source; }
+  int food_source() { return _food_source; }
   
   // Get the radius of this creature
-  double radius() { return (binaryToInt(size) / 255.0) * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS; }
+  double radius() { return (_size / 255.0) * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS; }
 
   /*
   // Merge two stars
@@ -73,13 +80,13 @@ private:
   vec2d _prev_pos;    // The previous position of this creature
   vec2d _vel;         // The velocity of this creature
   
-  int food_source;    // Herbivore (0) or carnivore (1)
-  int color[8];       // Color of the creature
-  int size[8];        // Size of the creature
-  int speed[8];       // Speed of the creature
-  int vision[8];      // Distance the creature can see
-  int energy[8];      // Max energy of the creature
-  int metabolism[8];  // Metabolism of the creature
+  int _food_source;    // Herbivore (0) or carnivore (1)
+  uint8_t _color;       // Color of the creature
+  uint8_t _size;        // Size of the creature
+  uint8_t _speed;       // Speed of the creature
+  uint8_t _vision;      // Distance the creature can see
+  uint8_t _energy;      // Max energy of the creature
+  int _metabolism;  // Metabolism of the creature
 };
 
 #endif

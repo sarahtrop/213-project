@@ -1,6 +1,8 @@
 # Build with clang
 CC  := clang
 CXX := clang++
+NVCC := nvcc -arch sm_20
+NVCC_FLAGS := -g -I/home/curtsinger/include -L/home/curtsinger/lib -ljansson
 
 # Default flags
 CFLAGS   ?= -g -O2 --std=c11
@@ -8,8 +10,8 @@ CXXFLAGS ?= -g -O2 --std=c++11
 LDFLAGS  += $(addprefix -l,$(LIBS))
 
 # Default source and object files
-SRCS    ?= $(wildcard *.cc) $(wildcard *.cpp) $(wildcard *.c)
-OBJS    ?= $(addprefix obj/,$(patsubst %.cpp,%.o,$(patsubst %.cc,%.o,$(patsubst %.c,%.o,$(SRCS)))))
+SRCS    ?= $(wildcard *.cc) $(wildcard *.cpp) $(wildcard *.c) $(wildcard *.cu)
+OBJS    ?= $(addprefix obj/,$(patsubst %.cu,%.o,$(patsubst %.cpp,%.o,$(patsubst %.cc,%.o,$(patsubst %.c,%.o,$(SRCS))))))
 
 # Targets to build recirsively into $(DIRS)
 RECURSIVE_TARGETS  ?= all clean test
@@ -58,6 +60,12 @@ obj/%.o: %.c $(PREREQS)
 	@echo $(LOG_PREFIX) Compiling $< $(LOG_SUFFIX)
 	@mkdir -p obj
 	@$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
+
+# Compile a Cuda source file (and generate its dependency rules)
+obj/%.o: %.cu $(PREREQS)
+	@echo $(LOG_PREFIX) Compiling $< $(LOG_SUFFIX)
+	@mkdir -p obj
+	@$(NVCC) $(NVCC_FLAGS) -o $@ -c $<
 
 # Link a shared library
 $(SHARED_LIB_TARGETS): $(OBJS)
