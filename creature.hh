@@ -12,13 +12,14 @@
 class creature {
 public:
   // Create a new star with a given position and velocity
-  creature(int food_source, uint8_t color, uint8_t size, uint8_t speed, uint8_t energy, uint8_t vision) : 
+  creature(int food_source, uint8_t color, uint8_t size, uint8_t speed, uint8_t energy, uint8_t vision, vec2d pos) : 
     _food_source(food_source),
     _size(size),
     _speed(speed),
     _energy(energy),
     _vision(vision),
-    _color(color) {}
+    _color(color),
+    _pos(pos) {}
   
   /*
   // Update this star's position with a given force and a change in time
