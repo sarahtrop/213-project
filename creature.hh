@@ -22,7 +22,8 @@ public:
     _speed(speed),
     _energy(energy),
     _vision(vision),
-    _color(color){}
+    _color(color),
+    _collided(false){}
   
   /*
   // Update this star's position with a given force and a change in time
@@ -64,6 +65,16 @@ public:
 
   double speed() { return (_speed / FPS); }
 
+  vec2d getPos(){ return _pos; }
+
+  vec2d getVel(){ return _vel; }
+
+  bool getCollided(){ return _collided; }
+
+  void setCollided(bool coll){
+    _collided = coll;
+  }
+
   //Randomly sets the position of the creature within passed bounds
   void setPos(){
     _pos = vec2d(rand() % (WIDTH - (int)ceil(2*radius())) + radius(), rand() % (HEIGHT - (int)ceil(2*radius())) + radius());
@@ -74,15 +85,17 @@ public:
     _pos = pos; 
   }
 
+  //Sets the velocity vector to a randomized normal vector
   void setVel(){
     double dir = rand() * 2 * 3.141;
-    double x = speed() * cos(dir);
-    double y = speed() * sin(dir);
-    _vel = vec2d(x,y);
+    double x = cos(dir);
+    double y = sin(dir);
+    _vel = vec2d(x,y).normalized();
   }
 
+  //Sets the velocity vector to the normalized passed vector
   void setVel(vec2d vel){
-    _vel = vel;
+    _vel = vel.normalized();
   }
 
   void update(){
@@ -99,7 +112,44 @@ public:
       setVel(vec2d(-1*_vel.x(), _vel.y()));
     }
     
-    _pos += _vel;
+    _pos += (_vel * speed());
+  }
+
+  void checkCollision(creature * partner){
+    vec2d partPos = (*partner).getPos();
+    vec2d partVel = (*partner).getVel();
+    
+    double dist = sqrt(pow((_pos.x() - partPos.x()), 2) + pow((_pos.y() - partPos.y()), 2));
+    //If a collision has occured
+    if(dist <= radius() + (*partner).radius() && intersects(partner)){
+      vec2d partPos = (*partner).getPos();
+      vec2d partVel = (*partner).getVel();
+
+      //https://nicoschertler.wordpress.com/2013/10/07/elastic-collision-of-circles-and-spheres/  
+      vec2d normal = vec2d(_pos.x() - partPos.x(), _pos.y() - partPos.y()).normalized();
+
+      //Get dot products
+      double c1dot = normal * _vel;
+      double c2dot = normal * partVel;
+
+      double p = c1dot - c2dot;
+      
+      setVel(_vel - normal * p);
+      (*partner).setVel(partVel + normal * p);
+    }
+  }
+
+  bool intersects(creature * partner){
+    vec2d partPos = (*partner).getPos();
+    vec2d partVel = (*partner).getVel();
+    double u = (_pos.y()*partVel.x() + partVel.y()*partPos.x() - partPos.y()*partVel.x() - partVel.y()*_pos.x()) / (_vel.x()*partVel.y() - _vel.y()*partVel.x());
+
+    double v = (_pos.x() + _vel.x() * u - partPos.x()) / partVel.x();
+    
+    if(u > 0 || v > 0){
+      return true;
+    }
+    return false;
   }
 
   /*
@@ -119,6 +169,7 @@ public:
   */
   
 private:
+  bool _collided;
   double _mass;       // The mass of this creature
   vec2d _pos;         // The position of this creature
   vec2d _prev_pos;    // The previous position of this creature
