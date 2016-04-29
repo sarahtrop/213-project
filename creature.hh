@@ -45,27 +45,6 @@ public:
       _curr_energy((int)energy / 2);
   }
   
-  /*
-  // Update this star's position with a given force and a change in time
-  void update(double dt) {
-    vec2d accel = _force / _mass;
-    
-    // Verlet integration
-    if(!_initialized) { // First step: no previous position
-      vec2d next_pos = _pos + _vel * dt + accel / 2 * dt * dt;
-      _prev_pos = _pos;
-      _pos = next_pos;
-    } else {  // Later steps: 
-      vec2d next_pos = _pos * 2 - _prev_pos + accel * dt * dt;
-      _prev_pos = _pos;
-      _pos = next_pos;
-    }
-    
-    // Track velocity, even though this isn't strictly required
-    _vel += accel * dt;
-    
-    } */
-  
   // Get the position of this creature
   vec2d pos() { return _pos; }
   
@@ -84,10 +63,6 @@ public:
   double radius() { return (_size / 255.0) * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS; }
 
   double speed() { return (_speed / FPS); }
-
-  vec2d getPos(){ return _pos; }
-
-  vec2d getVel(){ return _vel; }
 
   bool getCollided(){ return _collided; }
 
@@ -128,7 +103,7 @@ public:
   }
 
   // Decrements energy as time passes
-  void decEnergy(){
+  void decEnergy() {
     _curr_energy -= ((int)_energy / 9) - 4;
 
     // Ensuring energy is never 0
@@ -154,14 +129,14 @@ public:
   }
 
   void checkCollision(creature * partner){
-    vec2d partPos = (*partner).getPos();
-    vec2d partVel = (*partner).getVel();
+    vec2d partPos = (*partner).pos();
+    vec2d partVel = (*partner).vel();
     
     double dist = sqrt(pow((_pos.x() - partPos.x()), 2) + pow((_pos.y() - partPos.y()), 2));
     //If a collision has occured
     if(dist <= radius() + (*partner).radius() && intersects(partner)){
-      vec2d partPos = (*partner).getPos();
-      vec2d partVel = (*partner).getVel();
+      vec2d partPos = (*partner).pos();
+      vec2d partVel = (*partner).vel();
 
       //https://nicoschertler.wordpress.com/2013/10/07/elastic-collision-of-circles-and-spheres/  
       vec2d normal = vec2d(_pos.x() - partPos.x(), _pos.y() - partPos.y()).normalized();
@@ -178,8 +153,8 @@ public:
   }
 
   bool intersects(creature * partner){
-    vec2d partPos = (*partner).getPos();
-    vec2d partVel = (*partner).getVel();
+    vec2d partPos = (*partner).pos();
+    vec2d partVel = (*partner).vel();
     double u = (_pos.y()*partVel.x() + partVel.y()*partPos.x() - partPos.y()*partVel.x() - partVel.y()*_pos.x()) / (_vel.x()*partVel.y() - _vel.y()*partVel.x());
 
     double v = (_pos.x() + _vel.x() * u - partPos.x()) / partVel.x();
@@ -190,7 +165,7 @@ public:
     return false;
   }
 
-  /*
+  /* Possibly needed for reproduction purposes?
   // Merge two stars
   star merge(star other) {
     double mass = _mass + other._mass;
