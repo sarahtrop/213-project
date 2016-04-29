@@ -25,8 +25,7 @@ public:
     _speed(speed),
     _energy(energy),
     _vision(vision),
-    _color(color),
-    _collided(false) {
+    _color(color){
       setPos();
       setVel();
       _curr_energy = (int)_energy / 2;
@@ -38,8 +37,7 @@ public:
     _speed(speed),
     _energy(energy),
     _vision(vision),
-    _color(color),
-    _collided(false) {
+    _color(color){
       setPos(pos);
       setVel(vel);
       _curr_energy = (int)_energy / 2;
@@ -124,7 +122,7 @@ public:
     _pos += (_vel * speed());
   }
 
-  void checkCollision(creature * partner){
+  void checkCreatureCollision(creature * partner){
     vec2d partPos = (*partner).pos();
     vec2d partVel = (*partner).vel();
     
@@ -178,7 +176,6 @@ public:
   */
   
 private:
-  bool _collided;
   double _mass;       // The mass of this creature
   vec2d _pos;         // The position of this creature
   vec2d _prev_pos;    // The previous position of this creature
@@ -206,8 +203,19 @@ public:
   // Get the position of this creature
   vec2d pos() { return _pos; }
   
-  double getRadius(){
+  double radius(){
     return _radius;
+  }
+
+  bool checkCreatureCollision(creature * c){
+    vec2d cPos = (*c).pos();
+    
+    double dist = sqrt(pow((_pos.x() - cPos.x()), 2) + pow((_pos.y() - cPos.y()), 2));
+    //If a collision has occured
+    if(dist <= radius() + (*c).radius()){
+      return true;
+    }
+    return false;
   }
 
   void setPos(){
