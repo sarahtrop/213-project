@@ -26,9 +26,23 @@ public:
     _energy(energy),
     _vision(vision),
     _color(color),
-    _collided(false){
-    setPos();
-    setVel();
+    _collided(false) {
+      setPos();
+      setVel();
+      _curr_energy((int)energy / 2);
+  }
+
+    creature(int food_source, uint8_t color, uint8_t size, uint8_t speed, uint8_t energy, uint8_t vision, vec2d pos, vec2d vel) : 
+    _food_source(food_source),
+    _size(size),
+    _speed(speed),
+    _energy(energy),
+    _vision(vision),
+    _color(color),
+    _collided(false) {
+      setPos(pos);
+      setVel(vel);
+      _curr_energy((int)energy / 2);
   }
   
   // Get the position of this creature
@@ -49,10 +63,6 @@ public:
   double radius() { return (_size / 255.0) * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS; }
 
   double speed() { return (_speed / FPS); }
-
-  vec2d getPos(){ return _pos; }
-
-  vec2d getVel(){ return _vel; }
 
   bool getCollided(){ return _collided; }
 
@@ -83,8 +93,22 @@ public:
     _vel = vel.normalized();
   }
 
-  void decEnergy(){
-    
+  // Increments current energy when food is eaten
+  void incEnergy() {
+    _curr_energy += ((int)_energy / 9) - 4;
+
+    // If the energy level is higher or equal to the max possible, set to max
+    if (_curr_energy >= (int)_energy)
+      _curr_energy = (int)_energy;
+  }
+
+  // Decrements energy as time passes
+  void decEnergy() {
+    _curr_energy -= ((int)_energy / 9) - 4;
+
+    // Ensuring energy is never 0
+    if (_curr_energy <= 0)
+      _curr_energy = 0;
   }
 
   void update(){
@@ -105,14 +129,14 @@ public:
   }
 
   void checkCollision(creature * partner){
-    vec2d partPos = (*partner).getPos();
-    vec2d partVel = (*partner).getVel();
+    vec2d partPos = (*partner).pos();
+    vec2d partVel = (*partner).vel();
     
     double dist = sqrt(pow((_pos.x() - partPos.x()), 2) + pow((_pos.y() - partPos.y()), 2));
     //If a collision has occured
     if(dist <= radius() + (*partner).radius() && intersects(partner)){
-      vec2d partPos = (*partner).getPos();
-      vec2d partVel = (*partner).getVel();
+      vec2d partPos = (*partner).pos();
+      vec2d partVel = (*partner).vel();
 
       //https://nicoschertler.wordpress.com/2013/10/07/elastic-collision-of-circles-and-spheres/  
       vec2d normal = vec2d(_pos.x() - partPos.x(), _pos.y() - partPos.y()).normalized();
@@ -129,8 +153,8 @@ public:
   }
 
   bool intersects(creature * partner){
-    vec2d partPos = (*partner).getPos();
-    vec2d partVel = (*partner).getVel();
+    vec2d partPos = (*partner).pos();
+    vec2d partVel = (*partner).vel();
     double u = (_pos.y()*partVel.x() + partVel.y()*partPos.x() - partPos.y()*partVel.x() - partVel.y()*_pos.x()) / (_vel.x()*partVel.y() - _vel.y()*partVel.x());
 
     double v = (_pos.x() + _vel.x() * u - partPos.x()) / partVel.x();
@@ -141,7 +165,7 @@ public:
     return false;
   }
 
-  /*
+  /* Possibly needed for reproduction purposes?
   // Merge two stars
   star merge(star other) {
     double mass = _mass + other._mass;
