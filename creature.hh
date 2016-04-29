@@ -3,6 +3,9 @@
 
 #define MAX_RADIUS 20
 #define MIN_RADIUS 6
+#define MAX_ENERGY 28
+#define MIN_ENERGY 4
+
 #define FPS 50
 // Screen size
 #define WIDTH 960
@@ -23,7 +26,10 @@ public:
     _energy(energy),
     _vision(vision),
     _color(color),
-    _collided(false){}
+    _collided(false){
+    setPos();
+    setVel();
+  }
   
   /*
   // Update this star's position with a given force and a change in time
@@ -96,6 +102,10 @@ public:
   //Sets the velocity vector to the normalized passed vector
   void setVel(vec2d vel){
     _vel = vel.normalized();
+  }
+
+  void decEnergy(){
+    
   }
 
   void update(){
