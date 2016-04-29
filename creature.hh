@@ -26,9 +26,23 @@ public:
     _energy(energy),
     _vision(vision),
     _color(color),
-    _collided(false){
-    setPos();
-    setVel();
+    _collided(false) {
+      setPos();
+      setVel();
+      _curr_energy((int)energy / 2);
+  }
+
+    creature(int food_source, uint8_t color, uint8_t size, uint8_t speed, uint8_t energy, uint8_t vision, vec2d pos, vec2d vel) : 
+    _food_source(food_source),
+    _size(size),
+    _speed(speed),
+    _energy(energy),
+    _vision(vision),
+    _color(color),
+    _collided(false) {
+      setPos(pos);
+      setVel(vel);
+      _curr_energy((int)energy / 2);
   }
   
   /*
@@ -104,8 +118,22 @@ public:
     _vel = vel.normalized();
   }
 
+  // Increments current energy when food is eaten
+  void incEnergy() {
+    _curr_energy += ((int)_energy / 9) - 4;
+
+    // If the energy level is higher or equal to the max possible, set to max
+    if (_curr_energy >= (int)_energy)
+      _curr_energy = (int)_energy;
+  }
+
+  // Decrements energy as time passes
   void decEnergy(){
-    
+    _curr_energy -= ((int)_energy / 9) - 4;
+
+    // Ensuring energy is never 0
+    if (_curr_energy <= 0)
+      _curr_energy = 0;
   }
 
   void update(){
