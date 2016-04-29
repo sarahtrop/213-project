@@ -64,7 +64,7 @@ public:
   // Get the radius of this creature
   double radius() { return (_size / 255.0) * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS; }
 
-  double speed() { return (_speed / FPS); }
+  double speed() { return (_speed / FPS) * ((1 -(_size / 255)) * 1.5 + .5); }
 
   double curr_energy() { return _curr_energy; }
 
@@ -101,9 +101,9 @@ public:
     _metabolism = pow(((_vision + _size + _speed) / (255*3)) * 1.5 + .5, 2);
   }
 
-  // Increments current energy when food is eaten (adds 2 seconds of life)
+  // Increments current energy when food is eaten (inversely proportional to _energy)
   void incEnergy() {
-    _curr_energy = fmin(_max_energy, _curr_energy + FPS * 2);
+    _curr_energy = fmin(_max_energy, _curr_energy + FPS * ((1 - (_energy / 255)) * 1.5 + .5));
   }
 
   // Decrements energy as time passes
