@@ -31,27 +31,6 @@ public:
     setVel();
   }
   
-  /*
-  // Update this star's position with a given force and a change in time
-  void update(double dt) {
-    vec2d accel = _force / _mass;
-    
-    // Verlet integration
-    if(!_initialized) { // First step: no previous position
-      vec2d next_pos = _pos + _vel * dt + accel / 2 * dt * dt;
-      _prev_pos = _pos;
-      _pos = next_pos;
-    } else {  // Later steps: 
-      vec2d next_pos = _pos * 2 - _prev_pos + accel * dt * dt;
-      _prev_pos = _pos;
-      _pos = next_pos;
-    }
-    
-    // Track velocity, even though this isn't strictly required
-    _vel += accel * dt;
-    
-    } */
-  
   // Get the position of this creature
   vec2d pos() { return _pos; }
   
@@ -195,6 +174,29 @@ private:
   uint8_t _vision;      // Distance the creature can see
   uint8_t _energy;      // Max energy of the creature
   int _metabolism;  // Metabolism of the creature
+};
+
+class plant {
+public:
+  
+  plant() : _radius(2){
+    setPos();
+  }
+    
+  // Get the position of this creature
+  vec2d pos() { return _pos; }
+  
+  double getRadius(){
+    return _radius;
+  }
+
+  void setPos(){
+    _pos = vec2d(rand() % (WIDTH - (int)ceil(2*_radius)) + _radius, rand() % (HEIGHT - (int)ceil(2*_radius)) + _radius);
+  }
+  
+private:
+  vec2d _pos;
+  double _radius;
 };
 
 #endif
