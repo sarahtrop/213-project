@@ -1,10 +1,10 @@
 #if !defined(CREATURE_HH)
 #define CREATURE_HH
 
-#define MAX_RADIUS 20
-#define MIN_RADIUS 6
-#define MAX_ENERGY 28
-#define MIN_ENERGY 4
+#define MAX_RADIUS 20 //Radius of creature with _size of 255
+#define MIN_RADIUS 6 //Radius of creature with _size of 0
+#define MAX_ENERGY 28 //Seconds creature will live with _energy of 255
+#define MIN_ENERGY 4 //Seconds creature will live with _energy of 0
 
 #define FPS 50
 // Screen size
@@ -28,7 +28,9 @@ public:
     _color(color){
       setPos();
       setVel();
-      _curr_energy = (int)_energy / 2;
+      setMaxEnergy();
+      setMetabolism();
+      _curr_energy = (double)_max_energy / 2;
   }
 
     creature(int food_source, uint8_t color, uint8_t size, uint8_t speed, uint8_t energy, uint8_t vision, vec2d pos, vec2d vel) : 
@@ -40,7 +42,9 @@ public:
     _color(color){
       setPos(pos);
       setVel(vel);
-      _curr_energy = (int)_energy / 2;
+      setMaxEnergy();
+      setMetabolism();
+      _curr_energy = (double)_max_energy / 2;
   }
   
   // Get the position of this creature
@@ -87,18 +91,24 @@ public:
     _vel = vel.normalized();
   }
 
-  // Increments current energy when food is eaten
-  void incEnergy() {
-    _curr_energy += ((double)_energy / 9) - 4;
+  //Sets the maximum energy the creature can have
+  void setMaxEnergy(){
+    _max_energy = ((_energy / 255.0) * (MAX_ENERGY - MIN_ENERGY) + MIN_ENERGY) * FPS;
+  }
 
-    // If the energy level is higher or equal to the max possible, set to max
-    if (_curr_energy >= (double)_energy)
-      _curr_energy = (double)_energy;
+  //Metabolism directly proportional to the trait values 
+  void setMetabolism(){
+    _metabolism = pow(((_vision + _size + _speed) / (255*3)) * 1.5 + .5, 2);
+  }
+
+  // Increments current energy when food is eaten (adds 2 seconds of life)
+  void incEnergy() {
+    _curr_energy = fmin(_max_energy, _curr_energy + FPS * 2);
   }
 
   // Decrements energy as time passes
   void decEnergy() {
-    _curr_energy -= (((double)_energy / 9) - 4) / FPS;
+    _curr_energy -= _metabolism;
 
     // Ensuring energy is never 0
     if (_curr_energy <= 0)
@@ -181,16 +191,19 @@ private:
   vec2d _prev_pos;    // The previous position of this creature
   vec2d _vel;         // The velocity of this creature
 
+  //Variables dependent on traits
   double _act_size;
   double _curr_energy;
-  
+  double _metabolism;  // Metabolism of the creature
+  double _max_energy; //Max energy of creature in terms of frames
+
+  //Trait variables
   int _food_source;    // Herbivore (0) or carnivore (1)
   uint8_t _color;       // Color of the creature
   uint8_t _size;        // Size of the creature
   uint8_t _speed;       // Speed of the creature
   uint8_t _vision;      // Distance the creature can see
   uint8_t _energy;      // Max energy of the creature
-  int _metabolism;  // Metabolism of the creature
 };
 
 class plant {
