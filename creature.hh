@@ -29,7 +29,7 @@ public:
     _collided(false) {
       setPos();
       setVel();
-      _curr_energy((int)energy / 2);
+      _curr_energy = (int)_energy / 2;
   }
 
     creature(int food_source, uint8_t color, uint8_t size, uint8_t speed, uint8_t energy, uint8_t vision, vec2d pos, vec2d vel) : 
@@ -42,7 +42,7 @@ public:
     _collided(false) {
       setPos(pos);
       setVel(vel);
-      _curr_energy((int)energy / 2);
+      _curr_energy = (int)_energy / 2;
   }
   
   // Get the position of this creature
@@ -64,11 +64,7 @@ public:
 
   double speed() { return (_speed / FPS); }
 
-  bool getCollided(){ return _collided; }
-
-  void setCollided(bool coll){
-    _collided = coll;
-  }
+  double curr_energy() { return _curr_energy; }
 
   //Randomly sets the position of the creature within passed bounds
   void setPos(){
@@ -95,16 +91,16 @@ public:
 
   // Increments current energy when food is eaten
   void incEnergy() {
-    _curr_energy += ((int)_energy / 9) - 4;
+    _curr_energy += ((double)_energy / 9) - 4;
 
     // If the energy level is higher or equal to the max possible, set to max
-    if (_curr_energy >= (int)_energy)
-      _curr_energy = (int)_energy;
+    if (_curr_energy >= (double)_energy)
+      _curr_energy = (double)_energy;
   }
 
   // Decrements energy as time passes
   void decEnergy() {
-    _curr_energy -= ((int)_energy / 9) - 4;
+    _curr_energy -= (((double)_energy / 9) - 4) / FPS;
 
     // Ensuring energy is never 0
     if (_curr_energy <= 0)
