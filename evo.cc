@@ -175,6 +175,7 @@ void updateCreatures(){
         }
       }
     }
+    findNearestFood(creatures[i]);
   }
 }
 
@@ -183,4 +184,32 @@ void initCreatures() {
     creature new_creature = creature(0, 128, 255, 255, 128, 255);
     creatures.push_back(new_creature);
   }
+}
+
+
+// Finds the nearest food to a creature, and
+// changes the creatures velocity to go towards that creature.
+void findNearestFood(creature* c) {
+  // If a carnivore, not needed
+  if (_food_source == 1) {
+    return;
+  }
+
+  // Set the minimum distance as the farthest it can be to be visible
+  double minDist = c.vision();
+  // Se the current closest plant to the first one
+  plant closest = plants[0];
+  // Find the closest plant, and save it
+  for (int i = 0; i < plants.size(); i++) {
+    double curr_dist = plants[i].distFromCreature();
+    if (curr_dist < minDist) {
+      minDist = curr_dist;
+      closest = plants[i];
+    }
+  }
+
+  // Now that we have the closest plant,
+  // change the creature's velocity vector to go towards that plant
+  vec2d towards = vec2d(c.pos.x() - closest.pos.x(), c.pos.y() - closest.pos.y()).normalized();
+  c.setVel(towards);
 }
