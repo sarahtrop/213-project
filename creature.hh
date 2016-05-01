@@ -34,6 +34,7 @@ public:
       setMaxEnergy();
       setMetabolism();
       _curr_energy = (double)_max_energy / 2;
+      _status = 3;
   }
 
     creature(int food_source, uint8_t color, uint8_t size, uint8_t speed, uint8_t energy, uint8_t vision, vec2d pos, vec2d vel) : 
@@ -48,6 +49,7 @@ public:
       setMaxEnergy();
       setMetabolism();
       _curr_energy = (double)_max_energy / 2;
+      _status = 3;
   }
   
   // Get the position of this creature
@@ -71,10 +73,19 @@ public:
   double speed() { return ((double)_speed / FPS) * ((1 -(_size / 255)) * 1.5 + .5); }
 
   // Get the current energy of this creature
-  double curr_energy() { return _curr_energy; }
+  double curr_energy() { return (double)_curr_energy; }
+
+  // Get the maximum energy
+  double max_energy() { return (double)_max_energy; }
 
   // Get the vision of this creature
   double vision() { return (double)_vision + radius(); }
+
+  // Get the status
+  int status() { return _status; }
+
+  // Set the status
+  void setStatus(int stat) { _status = stat; }
 
   //Randomly sets the position of the creature within passed bounds
   void setPos(){
@@ -96,9 +107,7 @@ public:
 
   //Sets the velocity vector to the normalized passed vector
   void setVel(vec2d vel){
-    printf("Old: <%f, %f>\n", _vel.x(), _vel.y());
     _vel = vel.normalized();
-    printf("New: <%f, %f>\n", _vel.x(), _vel.y());
   }
 
   //Sets the maximum energy the creature can have
@@ -125,6 +134,15 @@ public:
       _curr_energy = 0;
   }
 
+  double distFromCreature(creature c) {
+    if (c.food_source() == _food_source) {
+      vec2d cPos = c.pos();
+      return sqrt(pow((_pos.x() - cPos.x()), 2) + pow((_pos.y() - cPos.y()), 2));
+    } else {
+      return 0.0;
+    }
+  }
+
   void update(){
     if(_pos.y()-radius() < 0 && _vel.y() < 0){
       setVel(vec2d(_vel.x(), -1*_vel.y()));
@@ -142,15 +160,21 @@ public:
     _pos += (_vel * speed());
   }
 
-  void checkCreatureCollision(creature * partner){
+  bool checkCreatureCollision(creature * partner){
     vec2d partPos = (*partner).pos();
     vec2d partVel = (*partner).vel();
+    bool reproduce = false;
     
     double dist = sqrt(pow((_pos.x() - partPos.x()), 2) + pow((_pos.y() - partPos.y()), 2));
     //If a collision has occured
     if(dist <= radius() + (*partner).radius() && intersects(partner)){
       vec2d partPos = (*partner).pos();
       vec2d partVel = (*partner).vel();
+
+      // If colliding because we've found a buddy
+      if (_status == 1 && partner->status() == 1) {
+        reproduce = true;
+      }
 
       //https://nicoschertler.wordpress.com/2013/10/07/elastic-collision-of-circles-and-spheres/  
       vec2d normal = vec2d(_pos.x() - partPos.x(), _pos.y() - partPos.y()).normalized();
@@ -164,6 +188,7 @@ public:
       setVel(_vel - normal * p);
       (*partner).setVel(partVel + normal * p);
     }
+    return reproduce;
   }
 
   bool intersects(creature * partner){
@@ -203,11 +228,13 @@ private:
   vec2d _prev_pos;    // The previous position of this creature
   vec2d _vel;         // The velocity of this creature
 
+  int _status;         // 0: being chased; 1: finding a buddy; 2: finding food; 3: do nothing
+
   //Variables dependent on traits
   double _act_size;
   double _curr_energy;
-  double _metabolism;  // Metabolism of the creature
-  double _max_energy; //Max energy of creature in terms of frames
+  double _metabolism; // Metabolism of the creature
+  double _max_energy; // Max energy of creature in terms of frames
 
   //Trait variables
   int _food_source;    // Herbivore (0) or carnivore (1)
