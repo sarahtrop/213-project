@@ -34,6 +34,7 @@ public:
       setMaxEnergy();
       setMetabolism();
       _curr_energy = (double)_max_energy / 2;
+      pthread_mutex_init(&lock, NULL);
   }
 
     creature(int food_source, uint8_t color, uint8_t size, uint8_t speed, uint8_t energy, uint8_t vision, vec2d pos, vec2d vel) : 
@@ -48,6 +49,7 @@ public:
       setMaxEnergy();
       setMetabolism();
       _curr_energy = (double)_max_energy / 2;
+      pthread_mutex_init(&lock, NULL);
   }
   
   // Get the position of this creature
@@ -216,6 +218,7 @@ public:
   
   plant() : _radius(2){
     setPos();
+    pthread_mutex_init(&lock, NULL);
   }
     
   // Get the position of this creature

@@ -26,8 +26,6 @@ void drawPlant(bitmap* bmp, plant p);
 vector<creature> creatures;
 vector<plant> plants;
 
-taskQueue_t * q;
-
 // Screen size
 #define WIDTH 960
 #define HEIGHT 720
@@ -47,7 +45,7 @@ int main(int argc, char** argv) {
 
   initCreatures();
   //initPlants();
-  initTaskQueue(q);
+  initTaskQueue();
 
   while(running) {    
     // Update creature positions
