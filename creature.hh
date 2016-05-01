@@ -13,6 +13,9 @@
 
 #include <cmath>
 #include <ctime>
+#include <pthread.h>
+#include <thread>
+
 #include "vec2d.hh"
 #include "header.hh"
 
@@ -62,9 +65,9 @@ public:
   int food_source() { return _food_source; }
   
   // Get the radius of this creature
-  double radius() { return (_size / 255.0) * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS; }
+  double radius() { return ((double)_size / 255.0) * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS; }
 
-  double speed() { return (_speed / FPS) * ((1 -(_size / 255)) * 1.5 + .5); }
+  double speed() { return ((double)_speed / FPS) * ((1 -(_size / 255)) * 1.5 + .5); }
 
   double curr_energy() { return _curr_energy; }
 
@@ -93,12 +96,12 @@ public:
 
   //Sets the maximum energy the creature can have
   void setMaxEnergy(){
-    _max_energy = ((_energy / 255.0) * (MAX_ENERGY - MIN_ENERGY) + MIN_ENERGY) * FPS;
+    _max_energy = (((double)_energy / 255.0) * (MAX_ENERGY - MIN_ENERGY) + MIN_ENERGY) * FPS;
   }
 
   //Metabolism directly proportional to the trait values 
   void setMetabolism(){
-    _metabolism = pow(((_vision + _size + _speed) / (255*3)) * 1.5 + .5, 2);
+    _metabolism = pow(((double)(_vision + _size + _speed) / (255*3)) * 1.5 + .5, 2);
   }
 
   // Increments current energy when food is eaten (inversely proportional to _energy)
@@ -186,6 +189,8 @@ public:
   */
   
 private:
+  pthread_mutex_t lock;
+  
   double _mass;       // The mass of this creature
   vec2d _pos;         // The position of this creature
   vec2d _prev_pos;    // The previous position of this creature
@@ -236,6 +241,8 @@ public:
   }
   
 private:
+  pthread_mutex_t lock;
+  
   vec2d _pos;
   double _radius;
 };
