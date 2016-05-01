@@ -67,11 +67,14 @@ public:
   // Get the radius of this creature
   double radius() { return ((double)_size / 255.0) * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS; }
 
+  // Get the speed of this creature
   double speed() { return ((double)_speed / FPS) * ((1 -(_size / 255)) * 1.5 + .5); }
 
+  // Get the current energy of this creature
   double curr_energy() { return _curr_energy; }
 
-  double vision() { return _ vision; }
+  // Get the vision of this creature
+  double vision() { return (double)_vision + radius(); }
 
   //Randomly sets the position of the creature within passed bounds
   void setPos(){
@@ -93,7 +96,9 @@ public:
 
   //Sets the velocity vector to the normalized passed vector
   void setVel(vec2d vel){
+    printf("Old: <%f, %f>\n", _vel.x(), _vel.y());
     _vel = vel.normalized();
+    printf("New: <%f, %f>\n", _vel.x(), _vel.y());
   }
 
   //Sets the maximum energy the creature can have
@@ -238,7 +243,8 @@ public:
     return false;
   }
 
-  double distFromCreature(creature* c) {
+  double distFromCreature(creature c) {
+    vec2d cPos = c.pos();
     return sqrt(pow((_pos.x() - cPos.x()), 2) + pow((_pos.y() - cPos.y()), 2));
   }
 

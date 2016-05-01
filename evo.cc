@@ -10,7 +10,7 @@
 
 using namespace std;
 
-#define NUM_CREATURES 200
+#define NUM_CREATURES 1
 
 // Initialize creatures in the simulation
 void initCreatures();
@@ -21,6 +21,9 @@ void updateCreatures();
 // Draw a circle on a bitmap based on this creature's position and radius
 void drawCreature(bitmap* bmp, creature c);
 void drawPlant(bitmap* bmp, plant p);
+
+// Find the nearest food source and change velocity vector
+void findNearestFood(creature * c);
 
 // List of creatures
 vector<creature> creatures;
@@ -149,15 +152,13 @@ void updateCreatures(){
   for(int i=0; i<creatures.size(); ++i) {
     creatures[i].update();
     creatures[i].decEnergy();
-    if(i == 0){
-      printf("%f\n", creatures[i].curr_energy());
-    }
     if(creatures[i].curr_energy() <= 0){
       creatures.erase(creatures.begin() + i);
       --i;
     }
+   findNearestFood(&creatures[i]);
   }
-
+  
   //This checks for collisions
   for(int i=0; i<creatures.size(); ++i){
     //Check for creature collisions
@@ -175,13 +176,12 @@ void updateCreatures(){
         }
       }
     }
-    findNearestFood(creatures[i]);
   }
 }
 
 void initCreatures() {
   for (int i = 0; i < NUM_CREATURES; i++) {
-    creature new_creature = creature(0, 128, 255, 255, 128, 255);
+    creature new_creature = creature(0, 128, 128, 128, 128, 128);
     creatures.push_back(new_creature);
   }
 }
@@ -189,27 +189,33 @@ void initCreatures() {
 
 // Finds the nearest food to a creature, and
 // changes the creatures velocity to go towards that creature.
-void findNearestFood(creature* c) {
+void findNearestFood(creature * c) {
   // If a carnivore, not needed
-  if (_food_source == 1) {
+  if (c->food_source() == 1) {
     return;
   }
 
   // Set the minimum distance as the farthest it can be to be visible
-  double minDist = c.vision();
+  double minDist = c->vision();
   // Se the current closest plant to the first one
-  plant closest = plants[0];
+  plant* closest = (plant *)malloc(sizeof(plant));
   // Find the closest plant, and save it
   for (int i = 0; i < plants.size(); i++) {
-    double curr_dist = plants[i].distFromCreature();
+    double curr_dist = plants[i].distFromCreature(*c);
     if (curr_dist < minDist) {
       minDist = curr_dist;
-      closest = plants[i];
+      closest = &plants[i];
     }
   }
 
+  if (closest == NULL) {
+    return;
+  }
   // Now that we have the closest plant,
   // change the creature's velocity vector to go towards that plant
-  vec2d towards = vec2d(c.pos.x() - closest.pos.x(), c.pos.y() - closest.pos.y()).normalized();
-  c.setVel(towards);
+  vec2d cPos = c->pos();
+  vec2d pPos = closest->pos();
+  vec2d towards = vec2d(pPos.x() - cPos.x(), pPos.y() - cPos.y());
+  //printf("New Vec: <%f, %f>\n", towards.x(), towards.y());
+  c->setVel(towards);
 }
