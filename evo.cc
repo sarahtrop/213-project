@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include "threads.hh"
 #include "creature.hh"
@@ -76,12 +77,11 @@ int main(int argc, char** argv) {
   initCreatures();
   //initPlants();
   initTaskQueue();
-  int loops;
-	unsigned int next_tick = GetTickCount();
-	const int skip_ticks = 1000 / FPS;
-  while(running) {  
-	  loops = 0;  
-	  while(GetTickCount()>next_tick && loops< 10){
+
+  unsigned int next_tick;
+  while(running) {
+    next_tick = GetTickCount();
+
     // Update creature positions
     updateCreatures();
 
@@ -104,11 +104,15 @@ int main(int argc, char** argv) {
       drawCreature(&bmp, creatures[i]);
       creatures[i]->setStatus(3);
     }
-	next_tick +=skip_ticks;
-	loops++;
-	}	
+	
     // Display the rendered frame
     ui.display(bmp);
+    unsigned int cur_time = GetTickCount();
+    unsigned int diff = cur_time - next_tick;
+    
+    if(diff < 1000/FPS){
+      usleep((1000/FPS - diff) * 1000);
+    }
   }
   
   return 0;
@@ -482,9 +486,9 @@ bool reproductionSimilarity(creature* c, creature* d) {
 //code from: http://www.doctort.org/adam/nerd-notes/linux-equivalent-of-the-windows-gettickcount-function.html
 unsigned GetTickCount()
 {
-        struct timeval tv;
-        if(gettimeofday(&tv, NULL) != 0)
-                return 0;
+  struct timeval tv;
+  if(gettimeofday(&tv, NULL) != 0)
+    return 0;
 
-        return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+  return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
 }

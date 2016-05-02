@@ -73,7 +73,7 @@ public:
   double radius() { return ((double)_size / 255.0) * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS; }
 
   // Get the speed of this creature
-  double speed() { return ((double)_speed / FPS) * ((1 -(_size / 255)) * 1.5 + .5); }
+  double speed() { return ((double)_speed/ 2 / FPS) * ((1 -(_size / 255)) * 1.5 + .5); }
 
   // Get the current energy of this creature
   double curr_energy() { return (double)_curr_energy; }
