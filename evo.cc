@@ -6,7 +6,8 @@
 #include <pthread.h>
 #include <thread>
 #include <stdlib.h>
-#include <ctime>
+#include <time.h>
+#include <sys/time.h>
 
 #include "threads.hh"
 #include "creature.hh"
@@ -31,7 +32,7 @@ void initCreatures();
 void handleTick(int i);
 
 // Generates a position for the creature guaranteed to not be on top of another creature
-void generatePos(creature* c);
+//void generatePos(creature* c);
 
 // Find the nearest food source and change velocity vector
 void findNearestFood(creature * c);
@@ -49,7 +50,7 @@ void reproduce(creature* c, creature* d);
 uint8_t new_trait(creature* c, creature* d, int trait);
 // check if the creatures are similar enough to reproduce
 bool reproductionSimilarity(creature* c, creature* d);
-
+unsigned GetTickCount();
 
 // List of creatures
 vector<creature*> creatures;
@@ -75,8 +76,12 @@ int main(int argc, char** argv) {
   initCreatures();
   //initPlants();
   initTaskQueue();
-
-  while(running) {    
+  int loops;
+	unsigned int next_tick = GetTickCount();
+	const int skip_ticks = 1000 / FPS;
+  while(running) {  
+	  loops = 0;  
+	  while(GetTickCount()>next_tick && loops< 10){
     // Update creature positions
     updateCreatures();
 
@@ -99,7 +104,9 @@ int main(int argc, char** argv) {
       drawCreature(&bmp, creatures[i]);
       creatures[i]->setStatus(3);
     }
-    
+	next_tick +=skip_ticks;
+	loops++;
+	}	
     // Display the rendered frame
     ui.display(bmp);
   }
@@ -210,7 +217,7 @@ void updateCreatures(){
 void initCreatures() {
   for (int i = 0; i < NUM_CREATURES; i++) {
     creature * new_creature = new creature(0, 128, 128, 128, 128, 128);
-    generatePos(new_creature);
+    //generatePos(new_creature);
     creatures.push_back(new_creature);
   }
 }
@@ -233,7 +240,7 @@ void handleTick(int i) {
 }
 
 // Generates a random position for a creature not on top of another one
-void generatePos(creature* c) {
+/*void generatePos(creature* c) {
   vec2d init_pos = c->pos();
   for (int i = 0; i < creatures.size(); i++) {
     vec2d other_pos = creatures[i]->pos();
@@ -245,7 +252,7 @@ void generatePos(creature* c) {
       return;
     }
   }
-}
+}*/
 
 // Finds the nearest food to a creature, and change velocity vector
 void findNearestFood(creature * c) {
@@ -400,7 +407,7 @@ void reproduce(creature* c, creature* d) {
                         new_trait(c, d, 2), new_trait(c, d, 3), new_trait(c, d, 4));
 
   // Check that the baby is not on top of another creature
-  generatePos(baby);
+  //generatePos(baby);
 
   // Add baby creature to the vector
   creatures.push_back(baby);
@@ -469,4 +476,15 @@ bool reproductionSimilarity(creature* c, creature* d) {
   else {
     return false;
   }
+}
+
+//The similar function as Window's function GetTickCount 
+//code from: http://www.doctort.org/adam/nerd-notes/linux-equivalent-of-the-windows-gettickcount-function.html
+unsigned GetTickCount()
+{
+        struct timeval tv;
+        if(gettimeofday(&tv, NULL) != 0)
+                return 0;
+
+        return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
 }
