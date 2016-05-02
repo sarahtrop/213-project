@@ -21,9 +21,9 @@ void initCreatures();
 void updateCreatures();
 
 // Draw a circle on a bitmap based on this creature's position and radius
-void drawCreature(bitmap* bmp, creature c);
+void drawCreature(bitmap* bmp, creature * c);
 // Draw a random plant for eating
-void drawPlant(bitmap* bmp, plant p);
+void drawPlant(bitmap* bmp, plant * p);
 
 // Find the nearest food source and change velocity vector
 void findNearestFood(creature * c);
@@ -46,8 +46,8 @@ bool reproductionSimilarity(creature* c, creature* d);
 void handleTick(int i);
 
 // List of creatures
-vector<creature> creatures;
-vector<plant> plants;
+vector<creature*> creatures;
+vector<plant*> plants;
 
 // Screen size
 #define WIDTH 960
@@ -78,8 +78,8 @@ int main(int argc, char** argv) {
     bmp.darken(0.60);
 
     double prob = rand() % 10;
-    if(prob <= 9){
-      plant newPlant = plant();
+    if(prob <= 3){
+      plant * newPlant = new plant();
       plants.push_back(newPlant);
     }
 
@@ -103,20 +103,20 @@ int main(int argc, char** argv) {
 
 // Draw a circle at the given creature's position
 // Uses method from http://groups.csail.mit.edu/graphics/classes/6.837/F98/Lecture6/circle.html
-void drawCreature(bitmap* bmp, creature c) {
+void drawCreature(bitmap* bmp, creature * c) {
 
-  double center_x = c.pos().x();
-  double center_y = c.pos().y();
-  double radius = c.radius();
+  double center_x = c->pos().x();
+  double center_y = c->pos().y();
+  double radius = c->radius();
   rgb32 border_color;
-  rgb32 inner_color = c.color();
+  rgb32 inner_color = c->color();
 
-  if (c.status() == 1) { //If reproducing, turn pink
+  if (c->status() == 1) { //If reproducing, turn pink
     inner_color = rgb32(219, 112, 147);
   }
 
   // Checking creature's food source to determine border color
-  if (c.food_source() == 1) {
+  if (c->food_source() == 1) {
     border_color = rgb32(255, 0, 0);
   }
   else {
@@ -147,11 +147,11 @@ void drawCreature(bitmap* bmp, creature c) {
   }
 }
 
-void drawPlant(bitmap* bmp, plant p){
-  double center_x = p.pos().x();
-  double center_y = p.pos().y();
-  double radius = p.radius();
-  rgb32 color = rgb32(0, 0, 255);
+void drawPlant(bitmap* bmp, plant * p){
+  double center_x = p->pos().x();
+  double center_y = p->pos().y();
+  double radius = p->radius();
+  rgb32 color = rgb32(64, 64, 255);
   
   // Loop over points in the upper-right quad of the circle
   for(double x = 0; x <= radius*1.1; x++) {
@@ -173,19 +173,6 @@ void drawPlant(bitmap* bmp, plant p){
 void updateCreatures(){
   //This updates position and checks for energy level
   for(int i=0; i<creatures.size(); ++i) {
-    /*if(creatures[i].curr_energy() <= 0){
-      creatures.erase(creatures.begin() + i);
-      --i;
-    }
-    else{
-      creatures[i].update();
-      creatures[i].decEnergy();
-
-      runAway(&creatures[i]);
-      findNearestBuddy(&creatures[i]);
-      findNearestFood(&creatures[i]);
-      findNearestHerbivore(&creatures[i]);
-      }*/
     handleTick(i);
   }
   
@@ -193,19 +180,19 @@ void updateCreatures(){
   for(int i=0; i<creatures.size(); ++i){
     //Check for creature collisions
     for(int j=i+1; j < creatures.size(); ++j){
-      bool isReproducing = creatures[i].checkCreatureCollision(&creatures[j]);
+      bool isReproducing = creatures[i]->checkCreatureCollision(creatures[j]);
       if (isReproducing) {
-        reproduce(&creatures[i], &creatures[j]);
+        reproduce(creatures[i], creatures[j]);
       }
     }
     //Check for plant collisions
-    if(creatures[i].food_source() == 0){
+    if(creatures[i]->food_source() == 0){
       for(int j = 0; j < plants.size(); ++j){
-        bool collided = plants[j].checkCreatureCollision(&creatures[i]);
+        bool collided = plants[j]->checkCreatureCollision(creatures[i]);
         if(collided){
           plants.erase(plants.begin() + j);
           --j;
-          creatures[i].incEnergy();
+          creatures[i]->incEnergy();
         }
       }
     }
@@ -215,27 +202,27 @@ void updateCreatures(){
 // Initialize creatures
 void initCreatures() {
   for (int i = 0; i < NUM_CREATURES; i++) {
-    creature new_creature = creature(0, 128, 128, 128, 128, 255);
+    creature * new_creature = new creature(0, 128, 128, 128, 128, 255);
     creatures.push_back(new_creature);
   }
 }
 
 // Perform the functions needed on each creature each frame
 void handleTick(int i) {
-  if(creatures[i].curr_energy() <= 0){
+  if(creatures[i]->curr_energy() <= 0){
     creatures.erase(creatures.begin() + i);
     --i;
   }
   else{
     //printf("%d: Pre Current Status: %d\n", i, creatures[i].status());
     
-    creatures[i].update();
-    creatures[i].decEnergy();
+    creatures[i]->update();
+    creatures[i]->decEnergy();
 
-    runAway(&creatures[i]);
-    findNearestBuddy(&creatures[i]);
-    findNearestFood(&creatures[i]);
-    findNearestHerbivore(&creatures[i]);
+    runAway(creatures[i]);
+    findNearestBuddy(creatures[i]);
+    findNearestFood(creatures[i]);
+    findNearestHerbivore(creatures[i]);
 
     //printf("%d: Post Current Status: %d\n", i, creatures[i].status());
   }
@@ -257,10 +244,10 @@ void findNearestFood(creature * c) {
   plant* closest = (plant *)malloc(sizeof(plant));
   // Find the closest plant, and save it
   for (int i = 0; i < plants.size(); i++) {
-    double curr_dist = plants[i].distFromCreature(*c);
+    double curr_dist = plants[i]->distFromCreature(*c);
     if (curr_dist < minDist) {
       minDist = curr_dist;
-      closest = &plants[i];
+      closest = plants[i];
     }
   }
 
@@ -291,7 +278,7 @@ void findNearestHerbivore(creature* c) {
     
   // Find the closest creature, and save it
   for (int i = 0; i < creatures.size(); i++) {
-    creature* to_eat = &creatures[i];
+    creature* to_eat = creatures[i];
     // Make sure we are eating an herbivore
     if (to_eat->food_source() == 0) {
       double curr_dist = to_eat->distFromCreature(*c);
@@ -323,7 +310,7 @@ void runAway(creature* c) {
     
   // Find the closest creature, and save it
   for (int i = 0; i < creatures.size(); i++) {
-    creature* carnivore = &creatures[i];
+    creature* carnivore = creatures[i];
     // Make sure we are running from a carnivore
     if (carnivore->food_source() == 1) {
       double curr_dist = carnivore->distFromCreature(*c);
@@ -359,7 +346,7 @@ void findNearestBuddy(creature* c) {
     
     // Find the closest creature, and save it
     for (int i = 0; i < creatures.size(); i++) {
-      creature* buddy = &creatures[i];
+      creature* buddy = creatures[i];
       double curr_dist = buddy->distFromCreature(*c);
       if (curr_dist != 0) { // Make sure our buddy is not us
         // Check qualifications for reproduction
@@ -400,7 +387,7 @@ void reproduce(creature* c, creature* d) {
   d->setStatus(3);
   
   // Create new baby creatures
-  creature baby = creature(c->food_source(), new_trait(c, d, 0), new_trait(c, d, 1), 
+  creature * baby = new creature(c->food_source(), new_trait(c, d, 0), new_trait(c, d, 1), 
                         new_trait(c, d, 2), new_trait(c, d, 3), new_trait(c, d, 4));
 
   // Add baby creature to the vector
