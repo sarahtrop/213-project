@@ -1,6 +1,7 @@
 //gui.hh taken from galaxy lab written by Charlie Curtsinger
 
 #include <cstdio>
+#include <stdint.h>
 #include <ctype.h>
 #include <vector>
 #include <pthread.h>
@@ -9,6 +10,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <cmath>
 
 #include "threads.hh"
 #include "creature.hh"
@@ -221,7 +223,6 @@ void updateCreatures(){
 void initCreatures() {
   for (int i = 0; i < NUM_CREATURES; i++) {
     creature * new_creature = new creature(0, 128, 128, 128, 128, 128);
-    //generatePos(new_creature);
     creatures.push_back(new_creature);
   }
 }
@@ -233,10 +234,15 @@ void handleTick(int i) {
     --i;
   }
   else{
-    runAway(creatures[i]);
-    findNearestBuddy(creatures[i]);
-    findNearestFood(creatures[i]);
-    //findNearestHerbivore(creatures[i]);
+    if(!creatures[i]->bouncing()){
+      runAway(creatures[i]);
+      findNearestBuddy(creatures[i]);
+      findNearestFood(creatures[i]);
+      //findNearestHerbivore(creatures[i]);
+    }
+    else{
+      creatures[i]->setBouncing(false);
+    }
     
     creatures[i]->update();
     creatures[i]->decEnergy();
@@ -437,19 +443,19 @@ uint8_t new_trait(creature* c, creature* d, int trait) {
   for (int i = 0; i < 8;  i++) { //For each bit in the trait
     int parent = rand() % 2;
     if (parent == 0) { //Take trait from parent1
-      if((uint8_t)(pow(2,i)) && parent1){ //If the bit in the ith position is a 1, add a 1 in that position
+      if((uint8_t)(pow(2,i)) & parent1){ //If the bit in the ith position is a 1, add a 1 in that position
         ret += (uint8_t)(pow(2,i));
       }
     }
     else{ //take trait from parent 2
-      if((uint8_t)(pow(2,i)) && parent2){ //If the bit in the ith position is a 1, add a 1 in that position
+      if((uint8_t)(pow(2,i)) & parent2){ //If the bit in the ith position is a 1, add a 1 in that position
         ret += (uint8_t)(pow(2,i));
       }
     }
   }
 
   if(mutBit != -1){ // If we are mutating, mutate
-    if(ret && (uint8_t)(pow(2,mutBit)) == 1){
+    if(ret & (uint8_t)(pow(2,mutBit))){
       ret -= (uint8_t)(pow(2,mutBit));
     }
     else{
@@ -468,7 +474,7 @@ bool reproductionSimilarity(creature* c, creature* d) {
     uint8_t p1 = c->getTrait(i);
     uint8_t p2 = d->getTrait(i);
     for (int j = 0; j < 8; j++) { // iterate over bits in trait
-      if (((uint8_t)(2^i) && p1) != ((uint8_t)(2^i) && p2)) {
+      if (((uint8_t)(2^i) & p1) != ((uint8_t)(2^i) & p2)) {
         ++count;
       }
     }

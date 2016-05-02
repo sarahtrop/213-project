@@ -29,6 +29,7 @@ public:
     _speed(speed),
     _energy(energy),
     _vision(vision),
+    _bouncing(false),
     _color(color){
       setPos();
       setVel();
@@ -45,6 +46,7 @@ public:
     _speed(speed),
     _energy(energy),
     _vision(vision),
+    _bouncing(false),
     _color(color){
       setPos(pos);
       setVel(vel);
@@ -73,7 +75,7 @@ public:
   double radius() { return ((double)_size / 255.0) * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS; }
 
   // Get the speed of this creature
-  double speed() { return ((double)_speed/ 2 / FPS) * ((1 -(_size / 255)) * 1.5 + .5); }
+  double speed() { return ((double)_speed/ (2 * FPS)) * ((1 -(_size / 255)) * 1.5 + .5); }
 
   // Get the current energy of this creature
   double curr_energy() { return (double)_curr_energy; }
@@ -113,9 +115,7 @@ public:
 
   // Set the status
   void setStatus(int stat) {
-    //printf("oldStatus: %d\n", _status);
     _status = stat;
-    //printf("newStatus: %d\n", _status);
   }
 
 
@@ -140,6 +140,14 @@ public:
   //Sets the velocity vector to the normalized passed vector
   void setVel(vec2d vel){
     _vel = vel.normalized();
+  }
+
+  bool bouncing(){
+    return _bouncing;
+  }
+
+  void setBouncing(bool val){
+    _bouncing = val;
   }
 
   //Sets the maximum energy the creature can have
@@ -205,6 +213,7 @@ public:
     double dist = sqrt(pow((_pos.x() - partPos.x()), 2) + pow((_pos.y() - partPos.y()), 2));
     //If a collision has occured
     if(dist <= radius() + (*partner).radius() && intersects(partner)){
+      _bouncing = true;
       vec2d partPos = (*partner).pos();
       vec2d partVel = (*partner).vel();
 
@@ -250,6 +259,8 @@ private:
   vec2d _vel;         // The velocity of this creature
 
   int _status;         // 0: being chased; 1: finding a buddy; 2: finding food; 3: do nothing
+
+  bool _bouncing;
 
   //Variables dependent on traits
   double _act_size;
