@@ -25,6 +25,9 @@ void drawPlant(bitmap* bmp, plant p);
 // Find the nearest food source and change velocity vector
 void findNearestFood(creature * c);
 
+// Find the nearest herbivore to eat and change velocity vectors
+void findNearestHerbivore(creature* c);
+
 // Find a buddy for reproduction
 bool findNearestBuddy(creature* c);
 
@@ -163,6 +166,7 @@ void updateCreatures(){
     }
     findNearestBuddy(&creatures[i]);
     findNearestFood(&creatures[i]);
+    findNearestHerbivore(&creatures[i]);
   }
   
   //This checks for collisions
@@ -196,8 +200,7 @@ void initCreatures() {
 }
 
 
-// Finds the nearest food to a creature, and
-// changes the creatures velocity to go towards that creature.
+// Finds the nearest food to a creature, and change velocity vector
 void findNearestFood(creature * c) {
   // If a carnivore, not needed
   if (c->food_source() == 1 || c->status() < 2) {
@@ -226,6 +229,38 @@ void findNearestFood(creature * c) {
     vec2d towards = vec2d(pPos.x() - cPos.x(), pPos.y() - cPos.y());
     c->setVel(towards);
     c->setStatus(2);
+  }
+}
+
+// Find the nearest herbivore to eat and change velocity vectors
+void findNearestHerbivore(creature* c) {
+  // If reproducing or an herbivore, keep doing your thing
+  if (c->status() == 1 || c->food_source() == 0) { 
+    return;
+  }
+  
+  double minDist = c->vision();
+  creature* closest = (creature *)malloc(sizeof(creature));
+    
+  // Find the closest creature, and save it
+  for (int i = 0; i < creatures.size(); i++) {
+    creature* to_eat = &creatures[i];
+    double curr_dist = to_eat->distFromCreature(*c);
+    // Make sure we are eating an herbivore
+    if (to_eat->food_source() == 0) {
+      minDist = curr_dist;
+      closest = to_eat;
+    }
+  }
+
+  if (minDist != c->vision()) { 
+    vec2d cPos = c->pos();
+    vec2d ePos = closest->pos();
+    vec2d towards = vec2d(ePos.x() - cPos.x(), ePos.y() - cPos.y());
+    c->setVel(towards);
+    closest->setVel(towards); // CHRIS: Is this how the herbivore runs away?
+    c->setStatus(2);
+    closest->setStatus(0);
   }
 }
 
