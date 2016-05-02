@@ -42,7 +42,7 @@ uint8_t new_trait(creature* c, creature* d, char* trait);
 // check if the creatures are similar enough to reproduce
 bool reproductionSimilarity(creature* c, creature* d);
 
-// Threading function
+// Perform the functions needed on each creature each frame
 void handleTick(int i);
 
 // List of creatures
@@ -173,24 +173,6 @@ void drawPlant(bitmap* bmp, plant p){
 void updateCreatures(){
   //This updates position and checks for energy level
   for(int i=0; i<creatures.size(); ++i) {
-    /*if(creatures[i].curr_energy() <= 0){
-      creatures.erase(creatures.begin() + i);
-      --i;
-    }
-    if (creatures[i].status() != 2) {
-      printf("creature %d status: %d\n", i, creatures[i].status());
-    }
-    runAway(&creatures[i]);
-    findNearestBuddy(&creatures[i]);
-    findNearestFood(&creatures[i]);
-    else{
-      creatures[i].update();
-      creatures[i].decEnergy();
-
-      findNearestBuddy(&creatures[i]);
-      findNearestFood(&creatures[i]);
-      findNearestHerbivore(&creatures[i]);
-      }*/
     handleTick(i);
   }
   
@@ -217,6 +199,7 @@ void updateCreatures(){
   }
 }
 
+// Initialize creatures
 void initCreatures() {
   for (int i = 0; i < NUM_CREATURES; i++) {
     creature new_creature = creature(0, 128, 128, 128, 128, 128);
@@ -224,6 +207,21 @@ void initCreatures() {
   }
 }
 
+// Perform the functions needed on each creature each frame
+void handleTick(int i) {
+  if(creatures[i].curr_energy() <= 0){
+    creatures.erase(creatures.begin() + i);
+    --i;
+  }
+  else{
+    creatures[i].update();
+    creatures[i].decEnergy();
+
+    findNearestBuddy(&creatures[i]);
+    findNearestFood(&creatures[i]);
+    findNearestHerbivore(&creatures[i]);
+  }
+}
 
 // Finds the nearest food to a creature, and change velocity vector
 void findNearestFood(creature * c) {
@@ -374,9 +372,8 @@ bool findNearestBuddy(creature* c) {
 // Reproduce with new creature
 void reproduce(creature* c, creature* d) {
   // Create new baby creatures
-  creature baby = creature(c->food_source(), new_trait(c, d, (char*)"color"),
-                           new_trait(c, d, (char*)"size"), new_trait(c, d, (char*)"speed"),
-                           new_trait(c, d, (char*)"energy"), new_trait(c, d, (char*)"vision"));
+  creature baby = creature(c->food_source(), new_trait(c, d, 0, new_trait(c, d, 1), 
+                        new_trait(c, d, 2), new_trait(c, d, 3), new_trait(c, d, 4));
 
   // Add baby creature to the vector
   creatures.push_back(baby);
@@ -391,7 +388,7 @@ void reproduce(creature* c, creature* d) {
 }
 
 // Create new trait from that of the parents
-uint8_t new_trait(creature* c, creature* d, char* trait) {
+uint8_t new_trait(creature* c, creature* d, int trait) {
 
   uint8_t parent1 = c->getTrait(trait);
   uint8_t parent2 = d->getTrait(trait);
@@ -429,23 +426,32 @@ uint8_t new_trait(creature* c, creature* d, char* trait) {
   return ret;
 }
 
-
 // Check if the creatures are similar enough to reproduce
 bool reproductionSimilarity(creature* c, creature* d) {
-  
-}
+  bool traits[8] = {true};
 
-void handleTick(int i){
-  if(creatures[i].curr_energy() <= 0){
-    creatures.erase(creatures.begin() + i);
-    --i;
+  for (int i = 0; i < 5; i++) { // iterate over all 5 traits
+    uint8_t p1 = c->getTrait(i);
+    uint8_t p2 = d->getTrait(i);
+    for (int j = 0; j < 8; j++) { // iterate over bits in trait
+      if (((uint8_t)(2^i) && p1) != ((uint8_t)(2^i) && p2) {
+        traits[i] = false; // store which traits are the same between both parents (true)
+      }
+    }
   }
-  else{
-    creatures[i].update();
-    creatures[i].decEnergy();
 
-    findNearestBuddy(&creatures[i]);
-    findNearestFood(&creatures[i]);
-    findNearestHerbivore(&creatures[i]);
+  // 4 out of 8 is enough to reproduce
+  int numTraits = 0;
+  for (int i = 0; i < 8; i++) {
+    if (traits[i]) {
+      numTraits++;
+    }
+  }
+  
+  if (numTraits >= 4) {
+    return true;
+  }
+  else {
+    return false;
   }
 }
