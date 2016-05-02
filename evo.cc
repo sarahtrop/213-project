@@ -30,6 +30,7 @@ bool findNearestBuddy(creature* c);
 
 // Reproduce
 void reproduce(creature* c, creature* d);
+uint8_t new_trait(creature* c, creature* d, char* trait);
 
 // List of creatures
 vector<creature> creatures;
@@ -272,7 +273,60 @@ bool findNearestBuddy(creature* c) {
 
 // Reproduce with new creature
 void reproduce(creature* c, creature* d) {
-  // TODO: halve energy of creatures, make new creatures, add heart animation
+  // Create new baby creatures
+  creature baby1 = creature(c->food_source(), new_trait(c, d, (char*)"color"), new_trait(c, d, (char*)"size"), 
+    new_trait(c, d, (char*)"speed"), new_trait(c, d, (char*)"energy"), new_trait(c, d, (char*)"vision"));
+  creature baby2 = creature(c->food_source(), new_trait(c, d, (char*)"color"), new_trait(c, d, (char*)"size"), 
+    new_trait(c, d, (char*)"speed"), new_trait(c, d, (char*)"energy"), new_trait(c, d, (char*)"vision"));
+
+  // Add baby creatures to the vector
+  creatures.push_back(baby1);
+  creatures.push_back(baby2);
+
+  // Deplete parents energy
+  c->halfEnergy();
+  d->halfEnergy();
+
+  // Set the status of the parents back to finding food
   c->setStatus(2);
   d->setStatus(2);
+}
+
+// Create new trait from that of the parents
+uint8_t new_trait(creature* c, creature* d, char* trait) {
+
+  uint8_t parent1;
+  uint8_t parent2;
+
+  if (strcmp(trait, "color") == 0) {
+    parent1 = c->color_trait();
+    parent2 = d->color_trait();
+  }
+  else if (strcmp(trait, "size") == 0) {
+    parent1 = c->size_trait();
+    parent2 = d->size_trait();
+  }
+  else if (strcmp(trait, "speed") == 0) {
+    parent1 = c->speed_trait();
+    parent2 = d->speed_trait();
+  }
+  else if (strcmp(trait, "energy") == 0) {
+    parent1 = c->energy_trait();
+    parent2 = d->energy_trait();
+  }
+  else if (strcmp(trait, "vision") == 0) {
+    parent1 = c->vision_trait();
+    parent2 = d->vision_trait();
+  }
+
+  srand(time(NULL));
+  uint8_t ret;
+  for (int i = 0; i < 8;  i++) {
+    int parent = rand() % 2;
+    if (parent == 0) {
+      // FLIPPING BITS OF THE PARENTS 
+      // TODO: CHRIS
+    }
+  }
+  return ret;
 }

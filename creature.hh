@@ -83,11 +83,27 @@ public:
   // Get the vision of this creature
   double vision() { return (double)_vision + radius(); }
 
+  // Get the vision trait
+  uint8_t vision_trait() { return _vision; }
+
+  // Get the speed trait
+  uint8_t speed_trait() { return _speed; }
+
+  // Get the energy trait
+  uint8_t energy_trait() { return _energy; }
+
+  // Get the size trait
+  uint8_t size_trait() { return _size; }
+
+  // Get the color trait
+  uint8_t color_trait() { return _color; }
+
   // Get the status
   int status() { return _status; }
 
   // Set the status
   void setStatus(int stat) { _status = stat; }
+
 
   //Randomly sets the position of the creature within passed bounds
   void setPos(){
@@ -134,6 +150,11 @@ public:
     // Ensuring energy is never 0
     if (_curr_energy <= 0)
       _curr_energy = 0;
+  }
+
+// Used when reproducing, cuts curr_energy in half
+  void halfEnergy() {
+    _curr_energy = _curr_energy / 2;
   }
 
   double distFromCreature(creature c) {
@@ -205,22 +226,6 @@ public:
     }
     return false;
   }
-
-  /* Possibly needed for reproduction purposes?
-  // Merge two stars
-  star merge(star other) {
-    double mass = _mass + other._mass;
-    vec2d pos = (_pos * _mass + other._pos * other._mass) / (_mass + other._mass);
-    vec2d vel = (_vel * _mass + other._vel * other._mass) / (_mass + other._mass);
-    
-    rgb32 color = rgb32(
-      ((double)_color.red*_mass + (double)other._color.red*other._mass) / (_mass + other._mass),
-      ((double)_color.green*_mass + (double)other._color.green*other._mass) / (_mass + other._mass),
-      ((double)_color.blue*_mass + (double)other._color.blue*other._mass) / (_mass + other._mass));
-    
-    return star(mass, pos, vel, color);
-  }
-  */
   
 private:
   pthread_mutex_t lock;
@@ -245,6 +250,12 @@ private:
   uint8_t _speed;       // Speed of the creature
   uint8_t _vision;      // Distance the creature can see
   uint8_t _energy;      // Max energy of the creature
+
+  /*
+  if (_status == 1) {
+    color = (uint8_t)rgb32(219, 112, 147);
+  }
+  */
 };
 
 class plant {

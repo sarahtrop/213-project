@@ -10,6 +10,8 @@
 
 //kottkech17 & leejeung
 
+void queueRun();
+
 //Struct for arbitrary tasks to be fed into the thread pool
 typedef struct taskNode{
   taskNode * next;
