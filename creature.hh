@@ -165,6 +165,11 @@ public:
     _curr_energy = fmin(_max_energy, _curr_energy + FPS * ((1 - (_energy / 255)) * 1.5 + .5));
   }
 
+  // Increments current energy by specified amount
+  void incEnergy(double add) {
+    _curr_energy = fmin(_max_energy, _curr_energy + add);
+  }
+
   // Decrements energy as time passes
   void decEnergy() {
     _curr_energy -= _metabolism;
@@ -205,10 +210,13 @@ public:
     _pos += (_vel * speed());
   }
 
-  bool checkCreatureCollision(creature * partner){
+  bool * checkCreatureCollision(creature * partner){
     vec2d partPos = (*partner).pos();
     vec2d partVel = (*partner).vel();
-    bool reproduce = false;
+    bool * colStatus = (bool*)malloc(sizeof(bool)*2);
+
+    colStatus[0] = false;
+    colStatus[1] = false;
     
     double dist = sqrt(pow((_pos.x() - partPos.x()), 2) + pow((_pos.y() - partPos.y()), 2));
     //If a collision has occured
@@ -219,7 +227,11 @@ public:
 
       // If colliding because we've found a buddy
       if (_status == 1 && partner->status() == 1) {
-        reproduce = true;
+        colStatus[0] = true;
+      }
+
+      if (_food_source == 1 && partner->food_source() == 0 && canEat(partner)){
+        colStatus[1] = true;
       }
 
       //https://nicoschertler.wordpress.com/2013/10/07/elastic-collision-of-circles-and-spheres/  
@@ -234,7 +246,17 @@ public:
       setVel(_vel - normal * p);
       (*partner).setVel(partVel + normal * p);
     }
-    return reproduce;
+    return colStatus;
+  }
+
+  bool canEat(creature * partner){
+    bool res = false;
+    if(_food_source == 1){
+      if(sqrt(pow(((double)_size / 255) - ((double)partner->getTrait(1) / 255), 2)) <= .1){
+        res = true;
+      }
+    }
+    return res;
   }
 
   bool intersects(creature * partner){

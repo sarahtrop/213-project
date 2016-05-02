@@ -18,7 +18,7 @@
 
 using namespace std;
 
-#define NUM_CREATURES 10
+#define NUM_CREATURES 20
 
 // Update all creatures in the simulation
 void updateCreatures();
@@ -200,9 +200,13 @@ void updateCreatures(){
   for(int i=0; i<creatures.size(); ++i){
     //Check for creature collisions
     for(int j=i+1; j < creatures.size(); ++j){
-      bool isReproducing = creatures[i]->checkCreatureCollision(creatures[j]);
-      if (isReproducing) {
+      bool * collideStatus = creatures[i]->checkCreatureCollision(creatures[j]);
+      if (collideStatus[0]) {
         reproduce(creatures[i], creatures[j]);
+      }
+      if (collideStatus[1]){
+        creatures[i]->incEnergy((creatures[j]->curr_energy()/10));
+        creatures.erase(creatures.begin() + j);
       }
     }
     //Check for plant collisions
@@ -223,6 +227,10 @@ void updateCreatures(){
 void initCreatures() {
   for (int i = 0; i < NUM_CREATURES; i++) {
     creature * new_creature = new creature(0, 128, 128, 128, 128, 128);
+    creatures.push_back(new_creature);
+  }
+  for (int i = 0; i < NUM_CREATURES/5; ++i){
+    creature * new_creature = new creature(1, 128, 128, 128, 128, 128);
     creatures.push_back(new_creature);
   }
 }
@@ -315,8 +323,10 @@ void findNearestHerbivore(creature* c) {
     // Make sure we are eating an herbivore
     if (to_eat->food_source() == 0) {
       double curr_dist = to_eat->distFromCreature(*c);
-      minDist = curr_dist;
-      closest = to_eat;
+      if(minDist > curr_dist){
+        minDist = curr_dist;
+        closest = to_eat;
+      }
     }
   }
 
@@ -325,10 +335,9 @@ void findNearestHerbivore(creature* c) {
   if (minDist != c->vision()) { 
     vec2d cPos = c->pos();
     vec2d ePos = closest->pos();
-    vec2d towards = vec2d(ePos.x() - cPos.x(), ePos.y() - cPos.y());
+    vec2d towards = ePos - cPos;
     c->setVel(towards);
     c->setStatus(2);
-    closest->setStatus(0);
   }
 }
 
@@ -340,6 +349,8 @@ void runAway(creature* c) {
 
   double minDist = c->vision();
   creature* closest = (creature *)malloc(sizeof(creature));
+  bool found = false;
+  vec2d away = vec2d(0,0);
     
   // Find the closest creature, and save it
   for (int i = 0; i < creatures.size(); i++) {
@@ -347,16 +358,15 @@ void runAway(creature* c) {
     // Make sure we are running from a carnivore
     if (carnivore->food_source() == 1) {
       double curr_dist = carnivore->distFromCreature(*c);
-      minDist = curr_dist;
-      closest = carnivore;
+      if(curr_dist <= minDist){
+        away = (away + (c->pos() - carnivore->pos()).normalized()).normalized();
+        found = true;
+      }
     }
   }
 
   // If the creature is not us, RUN AWAY
   if (minDist != c->vision()) { 
-    vec2d mePos = c->pos();
-    vec2d carnPos = closest->pos();
-    vec2d away = vec2d(carnPos.x() - mePos.x(), carnPos.y() - mePos.y());
     c->setVel(away);
     c->setStatus(0); //Set status to RUN AWAY
   }
