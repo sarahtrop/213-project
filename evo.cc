@@ -173,25 +173,20 @@ void drawPlant(bitmap* bmp, plant p){
 void updateCreatures(){
   //This updates position and checks for energy level
   for(int i=0; i<creatures.size(); ++i) {
-    /*if(creatures[i].curr_energy() <= 0){
+    if(creatures[i].curr_energy() <= 0){
       creatures.erase(creatures.begin() + i);
       --i;
     }
-    if (creatures[i].status() != 2) {
-      printf("creature %d status: %d\n", i, creatures[i].status());
-    }
-    runAway(&creatures[i]);
-    findNearestBuddy(&creatures[i]);
-    findNearestFood(&creatures[i]);
     else{
       creatures[i].update();
       creatures[i].decEnergy();
 
+      runAway(&creatures[i]);
       findNearestBuddy(&creatures[i]);
       findNearestFood(&creatures[i]);
       findNearestHerbivore(&creatures[i]);
-      }*/
-    handleTick(i);
+    }
+    //handleTick(i);
   }
   
   //This checks for collisions
