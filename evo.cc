@@ -12,7 +12,7 @@
 
 using namespace std;
 
-#define NUM_CREATURES 2
+#define NUM_CREATURES 10
 
 // Initialize creatures in the simulation
 void initCreatures();
@@ -34,15 +34,15 @@ void findNearestHerbivore(creature* c);
 void runAway(creature* c);
 
 // Find a buddy for reproduction
-bool findNearestBuddy(creature* c);
+void findNearestBuddy(creature* c);
 // Reproduce
 void reproduce(creature* c, creature* d);
 // Create new trait for reproduction
-uint8_t new_trait(creature* c, creature* d, char* trait);
+uint8_t new_trait(creature* c, creature* d, int trait);
 // check if the creatures are similar enough to reproduce
 bool reproductionSimilarity(creature* c, creature* d);
 
-// Threading function
+// Perform the functions needed on each creature each frame
 void handleTick(int i);
 
 // List of creatures
@@ -173,7 +173,7 @@ void drawPlant(bitmap* bmp, plant p){
 void updateCreatures(){
   //This updates position and checks for energy level
   for(int i=0; i<creatures.size(); ++i) {
-    if(creatures[i].curr_energy() <= 0){
+    /*if(creatures[i].curr_energy() <= 0){
       creatures.erase(creatures.begin() + i);
       --i;
     }
@@ -185,8 +185,8 @@ void updateCreatures(){
       findNearestBuddy(&creatures[i]);
       findNearestFood(&creatures[i]);
       findNearestHerbivore(&creatures[i]);
-    }
-    //handleTick(i);
+      }*/
+    handleTick(i);
   }
   
   //This checks for collisions
@@ -212,13 +212,34 @@ void updateCreatures(){
   }
 }
 
+// Initialize creatures
 void initCreatures() {
   for (int i = 0; i < NUM_CREATURES; i++) {
-    creature new_creature = creature(0, 128, 128, 128, 128, 128);
+    creature new_creature = creature(0, 128, 128, 128, 128, 255);
     creatures.push_back(new_creature);
   }
 }
 
+// Perform the functions needed on each creature each frame
+void handleTick(int i) {
+  if(creatures[i].curr_energy() <= 0){
+    creatures.erase(creatures.begin() + i);
+    --i;
+  }
+  else{
+    //printf("%d: Pre Current Status: %d\n", i, creatures[i].status());
+    
+    creatures[i].update();
+    creatures[i].decEnergy();
+
+    runAway(&creatures[i]);
+    findNearestBuddy(&creatures[i]);
+    findNearestFood(&creatures[i]);
+    findNearestHerbivore(&creatures[i]);
+
+    //printf("%d: Post Current Status: %d\n", i, creatures[i].status());
+  }
+}
 
 // Finds the nearest food to a creature, and change velocity vector
 void findNearestFood(creature * c) {
@@ -252,6 +273,9 @@ void findNearestFood(creature * c) {
     vec2d towards = vec2d(pPos.x() - cPos.x(), pPos.y() - cPos.y());
     c->setVel(towards);
     c->setStatus(2);
+  }
+  else if(c->status() == 2){
+    c->setStatus(3);
   }
 }
 
@@ -314,18 +338,18 @@ void runAway(creature* c) {
     vec2d carnPos = closest->pos();
     vec2d away = vec2d(carnPos.x() - mePos.x(), carnPos.y() - mePos.y());
     c->setVel(away);
-    c->setStatus(0);
+    c->setStatus(0); //Set status to RUN AWAY
   }
-  else {
-    c->setStatus(3);
+  else if(c->status() == 0){
+    c->setStatus(3); //Set status to nothing (yield to next behavior)
   }
 }
 
 
 // Finds the nearest buddy for reproduction
-bool findNearestBuddy(creature* c) {
-  if (c->status() == 0) { // If we are being chased, DON'T FIND A BUDDY: LIVE
-    return false;
+void findNearestBuddy(creature* c) {
+  if (c->status() < 2) { // If we are being chased, or already have a buddy DON'T FIND A BUDDY
+    return;
   }
   
   if ((c->curr_energy() / c->max_energy()) >= 0.7) {
@@ -339,10 +363,11 @@ bool findNearestBuddy(creature* c) {
       double curr_dist = buddy->distFromCreature(*c);
       if (curr_dist != 0) { // Make sure our buddy is not us
         // Check qualifications for reproduction
-        if (curr_dist < minDist &&
-            buddy->food_source() == type &&
-            buddy->curr_energy() / buddy->max_energy() >= 0.7 &&
-            reproductionSimilarity(c, buddy)) {
+        if (curr_dist < minDist && //Did we find a buddy
+            buddy->food_source() == type && //Is the buddy our food type
+            buddy->curr_energy() / buddy->max_energy() >= 0.7 && //Does buddy have the energy
+            reproductionSimilarity(c, buddy) && //Are we the same species
+            buddy->status() > 1) { //Is buddy not someone else's buddy
           minDist = curr_dist;
           closest = buddy;
         }
@@ -359,19 +384,24 @@ bool findNearestBuddy(creature* c) {
       closest->setVel(towardsC);
       c->setStatus(1);
       closest->setStatus(1);
-      return true;
     }
   }
-
-  return false;
+  else if(c->status() == 1){
+    c->setStatus(3); //Yield to other behaviors
+  }
 }
 
 // Reproduce with new creature
 void reproduce(creature* c, creature* d) {
+
+  // Set the status of the parents back to doing nothing
+  //printf("Reproduce\n");
+  c->setStatus(3);
+  d->setStatus(3);
+  
   // Create new baby creatures
-  creature baby = creature(c->food_source(), new_trait(c, d, (char*)"color"),
-                           new_trait(c, d, (char*)"size"), new_trait(c, d, (char*)"speed"),
-                           new_trait(c, d, (char*)"energy"), new_trait(c, d, (char*)"vision"));
+  creature baby = creature(c->food_source(), new_trait(c, d, 0), new_trait(c, d, 1), 
+                        new_trait(c, d, 2), new_trait(c, d, 3), new_trait(c, d, 4));
 
   // Add baby creature to the vector
   creatures.push_back(baby);
@@ -379,14 +409,10 @@ void reproduce(creature* c, creature* d) {
   // Deplete parents energy
   c->halfEnergy();
   d->halfEnergy();
-
-  // Set the status of the parents back to doing nothing
-  c->setStatus(3);
-  d->setStatus(3);
 }
 
 // Create new trait from that of the parents
-uint8_t new_trait(creature* c, creature* d, char* trait) {
+uint8_t new_trait(creature* c, creature* d, int trait) {
 
   uint8_t parent1 = c->getTrait(trait);
   uint8_t parent2 = d->getTrait(trait);
@@ -424,23 +450,25 @@ uint8_t new_trait(creature* c, creature* d, char* trait) {
   return ret;
 }
 
-
 // Check if the creatures are similar enough to reproduce
 bool reproductionSimilarity(creature* c, creature* d) {
+  int count = 0;
   
-}
-
-void handleTick(int i){
-  if(creatures[i].curr_energy() <= 0){
-    creatures.erase(creatures.begin() + i);
-    --i;
+  for (int i = 0; i < 5; i++) { // iterate over all 5 traits
+    uint8_t p1 = c->getTrait(i);
+    uint8_t p2 = d->getTrait(i);
+    for (int j = 0; j < 8; j++) { // iterate over bits in trait
+      if (((uint8_t)(2^i) && p1) != ((uint8_t)(2^i) && p2)) {
+        ++count;
+      }
+    }
   }
-  else{
-    creatures[i].update();
-    creatures[i].decEnergy();
 
-    findNearestBuddy(&creatures[i]);
-    findNearestFood(&creatures[i]);
-    findNearestHerbivore(&creatures[i]);
+  
+  if (count < 8) {
+    return true;
+  }
+  else {
+    return false;
   }
 }

@@ -84,25 +84,27 @@ public:
   // Get the vision of this creature
   double vision() { return (double)_vision + radius(); }
 
-  // Get a trait
-  uint8_t getTrait(char* trait) {
-    if (strcmp(trait, "color") == 0) {
-      return _color;
-    }
-    else if (strcmp(trait, "size") == 0) {
-      return _size;
-    }
-    else if (strcmp(trait, "speed") == 0) {
-      return _speed;
-    }
-    else if (strcmp(trait, "energy") == 0) {
-      return _energy;
-    }
-    else if (strcmp(trait, "vision") == 0) {
-      return _vision;
-    }
-    else {
-      return (uint8_t)-1;
+  // Get a trait 
+  uint8_t getTrait(int trait) {
+    switch(trait) {
+      case 0:
+        return _color; 
+        break;
+      case 1:
+        return _size;
+        break;
+      case 2:
+        return _speed;
+        break;
+      case 3:
+        return _energy;
+        break;
+      case 4:
+        return _vision;
+        break;
+      default:
+        return (uint8_t)-1;
+        break;
     }
   }
 
@@ -110,7 +112,11 @@ public:
   int status() { return _status; }
 
   // Set the status
-  void setStatus(int stat) { _status = stat; }
+  void setStatus(int stat) {
+    //printf("oldStatus: %d\n", _status);
+    _status = stat;
+    //printf("newStatus: %d\n", _status);
+  }
 
 
   //Randomly sets the position of the creature within passed bounds
@@ -162,7 +168,7 @@ public:
 
 // Used when reproducing, cuts curr_energy in half
   void halfEnergy() {
-    _curr_energy = _max_energy / 2;
+    _curr_energy -= (_max_energy / 2);
   }
 
   double distFromCreature(creature c) {
