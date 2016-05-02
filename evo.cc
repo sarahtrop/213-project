@@ -1,3 +1,5 @@
+//gui.hh taken from galaxy lab written by Charlie Curtsinger
+
 #include <cstdio>
 #include <ctype.h>
 #include <vector>
@@ -34,6 +36,7 @@ bool findNearestBuddy(creature* c);
 // Reproduce
 void reproduce(creature* c, creature* d);
 uint8_t new_trait(creature* c, creature* d, char* trait);
+void handleTick(int i);
 
 // List of creatures
 vector<creature> creatures;
@@ -158,15 +161,19 @@ void drawPlant(bitmap* bmp, plant p){
 void updateCreatures(){
   //This updates position and checks for energy level
   for(int i=0; i<creatures.size(); ++i) {
-    creatures[i].update();
-    creatures[i].decEnergy();
-    if(creatures[i].curr_energy() <= 0){
+    /*if(creatures[i].curr_energy() <= 0){
       creatures.erase(creatures.begin() + i);
       --i;
     }
-    findNearestBuddy(&creatures[i]);
-    findNearestFood(&creatures[i]);
-    findNearestHerbivore(&creatures[i]);
+    else{
+      creatures[i].update();
+      creatures[i].decEnergy();
+
+      findNearestBuddy(&creatures[i]);
+      findNearestFood(&creatures[i]);
+      findNearestHerbivore(&creatures[i]);
+      }*/
+    handleTick(i);
   }
   
   //This checks for collisions
@@ -364,4 +371,19 @@ uint8_t new_trait(creature* c, creature* d, char* trait) {
     }
   }
   return ret;
+}
+
+void handleTick(int i){
+  if(creatures[i].curr_energy() <= 0){
+    creatures.erase(creatures.begin() + i);
+    --i;
+  }
+  else{
+    creatures[i].update();
+    creatures[i].decEnergy();
+
+    findNearestBuddy(&creatures[i]);
+    findNearestFood(&creatures[i]);
+    findNearestHerbivore(&creatures[i]);
+  }
 }

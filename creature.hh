@@ -1,3 +1,5 @@
+//vec2d.hh taken from galaxy lab written by Charlie Curtsinger
+
 #if !defined(CREATURE_HH)
 #define CREATURE_HH
 

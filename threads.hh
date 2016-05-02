@@ -8,15 +8,15 @@
 
 #define MAXTHREADS 8
 
-//kottkech17 & leejeung
+//code structure from kottkech17 & leejeung galaxy lab
 
 void queueRun();
 
 //Struct for arbitrary tasks to be fed into the thread pool
 typedef struct taskNode{
   taskNode * next;
-  void (*task)(creature* c);
-  creature * c;
+  void (*task)(int i);
+  int i;
 }taskNode_t;
 
 //The structure for the task Queue itself
@@ -66,16 +66,16 @@ void queueRun(){
     pthread_mutex_unlock(&q->lock);
 
     if(node != NULL){
-      node->task(node->c); //Run task;
+      node->task(node->i); //Run task;
     }
   }
 }
 
-void addTask(void(*task)(creature*), creature * c){
+void addTask(void(*task)(int), int i){
   taskNode_t * node = (taskNode_t *)malloc(sizeof(taskNode_t));
   node->task = task;
-  node->c = c;
   node->next = NULL;
+  node->i = i;
 
   pthread_mutex_lock(&q->lock);
 
