@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
     bmp.darken(0.60);
 
     double prob = rand() % 10;
-    if(prob <= 3){
+    if(prob <= 5){
       plant * newPlant = new plant();
       plants.push_back(newPlant);
     }
@@ -91,6 +91,7 @@ int main(int argc, char** argv) {
     // Draw creatures
     for (int i = 0; i < creatures.size(); i++) {
       drawCreature(&bmp, creatures[i]);
+      creatures[i]->setStatus(3);
     }
     
     // Display the rendered frame
@@ -202,7 +203,7 @@ void updateCreatures(){
 // Initialize creatures
 void initCreatures() {
   for (int i = 0; i < NUM_CREATURES; i++) {
-    creature * new_creature = new creature(0, 128, 128, 128, 128, 255);
+    creature * new_creature = new creature(0, 128, 128, 128, 128, 128);
     creatures.push_back(new_creature);
   }
 }
@@ -214,17 +215,13 @@ void handleTick(int i) {
     --i;
   }
   else{
-    //printf("%d: Pre Current Status: %d\n", i, creatures[i].status());
-    
-    creatures[i]->update();
-    creatures[i]->decEnergy();
-
     runAway(creatures[i]);
     findNearestBuddy(creatures[i]);
     findNearestFood(creatures[i]);
-    findNearestHerbivore(creatures[i]);
-
-    //printf("%d: Post Current Status: %d\n", i, creatures[i].status());
+    //findNearestHerbivore(creatures[i]);
+    
+    creatures[i]->update();
+    creatures[i]->decEnergy();
   }
 }
 
@@ -260,9 +257,6 @@ void findNearestFood(creature * c) {
     vec2d towards = vec2d(pPos.x() - cPos.x(), pPos.y() - cPos.y());
     c->setVel(towards);
     c->setStatus(2);
-  }
-  else if(c->status() == 2){
-    c->setStatus(3);
   }
 }
 
@@ -327,15 +321,12 @@ void runAway(creature* c) {
     c->setVel(away);
     c->setStatus(0); //Set status to RUN AWAY
   }
-  else if(c->status() == 0){
-    c->setStatus(3); //Set status to nothing (yield to next behavior)
-  }
 }
 
 
 // Finds the nearest buddy for reproduction
 void findNearestBuddy(creature* c) {
-  if (c->status() < 2) { // If we are being chased, or already have a buddy DON'T FIND A BUDDY
+  if (c->status() < 1) { // If we are being chased, DON'T FIND A BUDDY
     return;
   }
   
@@ -373,22 +364,20 @@ void findNearestBuddy(creature* c) {
       closest->setStatus(1);
     }
   }
-  else if(c->status() == 1){
-    c->setStatus(3); //Yield to other behaviors
-  }
 }
 
 // Reproduce with new creature
 void reproduce(creature* c, creature* d) {
 
   // Set the status of the parents back to doing nothing
-  //printf("Reproduce\n");
   c->setStatus(3);
   d->setStatus(3);
   
   // Create new baby creatures
   creature * baby = new creature(c->food_source(), new_trait(c, d, 0), new_trait(c, d, 1), 
                         new_trait(c, d, 2), new_trait(c, d, 3), new_trait(c, d, 4));
+
+  printf("New Creature: \n\tFood: %d\n\tColor: %d\n\tSize: %d\n\tSpeed: %d\n\tEnergy: %d\n\tVision: %d\n", baby->food_source(), baby->getTrait(0), baby->getTrait(1), baby->getTrait(2), baby->getTrait(3), baby->getTrait(4));
 
   // Add baby creature to the vector
   creatures.push_back(baby);
@@ -400,6 +389,7 @@ void reproduce(creature* c, creature* d) {
 
 // Create new trait from that of the parents
 uint8_t new_trait(creature* c, creature* d, int trait) {
+  srand(time(NULL));
 
   uint8_t parent1 = c->getTrait(trait);
   uint8_t parent2 = d->getTrait(trait);
