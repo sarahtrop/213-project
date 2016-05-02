@@ -1,3 +1,5 @@
+//gui.hh taken from galaxy lab written by Charlie Curtsinger
+
 #include <cstdio>
 #include <ctype.h>
 #include <vector>
@@ -39,6 +41,9 @@ void reproduce(creature* c, creature* d);
 uint8_t new_trait(creature* c, creature* d, char* trait);
 // check if the creatures are similar enough to reproduce
 bool reproductionSimilarity(creature* c, creature* d);
+
+// Threading function
+void handleTick(int i);
 
 // List of creatures
 vector<creature> creatures;
@@ -168,9 +173,7 @@ void drawPlant(bitmap* bmp, plant p){
 void updateCreatures(){
   //This updates position and checks for energy level
   for(int i=0; i<creatures.size(); ++i) {
-    creatures[i].update();
-    creatures[i].decEnergy();
-    if(creatures[i].curr_energy() <= 0){
+    /*if(creatures[i].curr_energy() <= 0){
       creatures.erase(creatures.begin() + i);
       --i;
     }
@@ -180,6 +183,15 @@ void updateCreatures(){
     runAway(&creatures[i]);
     findNearestBuddy(&creatures[i]);
     findNearestFood(&creatures[i]);
+    else{
+      creatures[i].update();
+      creatures[i].decEnergy();
+
+      findNearestBuddy(&creatures[i]);
+      findNearestFood(&creatures[i]);
+      findNearestHerbivore(&creatures[i]);
+      }*/
+    handleTick(i);
   }
   
   //This checks for collisions
@@ -417,8 +429,23 @@ uint8_t new_trait(creature* c, creature* d, char* trait) {
   return ret;
 }
 
+
 // Check if the creatures are similar enough to reproduce
 bool reproductionSimilarity(creature* c, creature* d) {
   
+}
 
+void handleTick(int i){
+  if(creatures[i].curr_energy() <= 0){
+    creatures.erase(creatures.begin() + i);
+    --i;
+  }
+  else{
+    creatures[i].update();
+    creatures[i].decEnergy();
+
+    findNearestBuddy(&creatures[i]);
+    findNearestFood(&creatures[i]);
+    findNearestHerbivore(&creatures[i]);
+  }
 }
