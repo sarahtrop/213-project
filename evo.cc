@@ -14,9 +14,6 @@ using namespace std;
 
 #define NUM_CREATURES 10
 
-// Initialize creatures in the simulation
-void initCreatures();
-
 // Update all creatures in the simulation
 void updateCreatures();
 
@@ -24,6 +21,15 @@ void updateCreatures();
 void drawCreature(bitmap* bmp, creature * c);
 // Draw a random plant for eating
 void drawPlant(bitmap* bmp, plant * p);
+
+// Initialize creatures in the simulation
+void initCreatures();
+
+// Perform the functions needed on each creature each frame
+void handleTick(int i);
+
+// Generates a position for the creature guaranteed to not be on top of another creature
+void generatePos(creature* c);
 
 // Find the nearest food source and change velocity vector
 void findNearestFood(creature * c);
@@ -42,8 +48,6 @@ uint8_t new_trait(creature* c, creature* d, int trait);
 // check if the creatures are similar enough to reproduce
 bool reproductionSimilarity(creature* c, creature* d);
 
-// Perform the functions needed on each creature each frame
-void handleTick(int i);
 
 // List of creatures
 vector<creature*> creatures;
@@ -204,6 +208,7 @@ void updateCreatures(){
 void initCreatures() {
   for (int i = 0; i < NUM_CREATURES; i++) {
     creature * new_creature = new creature(0, 128, 128, 128, 128, 128);
+    generatePos(new_creature);
     creatures.push_back(new_creature);
   }
 }
@@ -222,6 +227,21 @@ void handleTick(int i) {
     
     creatures[i]->update();
     creatures[i]->decEnergy();
+  }
+}
+
+// Generates a random position for a creature not on top of another one
+void generatePos(creature* c) {
+  vec2d init_pos = c->pos();
+  for (int i = 0; i < creatures.size(); i++) {
+    vec2d other_pos = creatures[i]->pos();
+    if (init_pos.x() == other_pos.x() && init_pos.y() == other_pos.y()) {
+      c->setPos();
+      init_pos = c->pos();
+    }
+    else {
+      return;
+    }
   }
 }
 
@@ -379,6 +399,9 @@ void reproduce(creature* c, creature* d) {
 
   printf("New Creature: \n\tFood: %d\n\tColor: %d\n\tSize: %d\n\tSpeed: %d\n\tEnergy: %d\n\tVision: %d\n", baby->food_source(), baby->getTrait(0), baby->getTrait(1), baby->getTrait(2), baby->getTrait(3), baby->getTrait(4));
 
+  // Check that the baby is not on top of another creature
+  generatePos(baby);
+
   // Add baby creature to the vector
   creatures.push_back(baby);
 
@@ -440,7 +463,6 @@ bool reproductionSimilarity(creature* c, creature* d) {
       }
     }
   }
-
   
   if (count < 8) {
     return true;
