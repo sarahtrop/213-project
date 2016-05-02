@@ -17,7 +17,6 @@
 #include <thread>
 
 #include "vec2d.hh"
-#include "header.hh"
 
 class creature {
 public:
@@ -83,20 +82,27 @@ public:
   // Get the vision of this creature
   double vision() { return (double)_vision + radius(); }
 
-  // Get the vision trait
-  uint8_t vision_trait() { return _vision; }
-
-  // Get the speed trait
-  uint8_t speed_trait() { return _speed; }
-
-  // Get the energy trait
-  uint8_t energy_trait() { return _energy; }
-
-  // Get the size trait
-  uint8_t size_trait() { return _size; }
-
-  // Get the color trait
-  uint8_t color_trait() { return _color; }
+  // Get a trait
+  uint8_t getTrait(char* trait) {
+    if (strcmp(trait, "color") == 0) {
+      return _color;
+    }
+    else if (strcmp(trait, "size") == 0) {
+      return _size;
+    }
+    else if (strcmp(trait, "speed") == 0) {
+      return _speed;
+    }
+    else if (strcmp(trait, "energy") == 0) {
+      return _energy;
+    }
+    else if (strcmp(trait, "vision") == 0) {
+      return _vision;
+    }
+    else {
+      return (uint8_t)-1;
+    }
+  }
 
   // Get the status
   int status() { return _status; }
@@ -154,7 +160,7 @@ public:
 
 // Used when reproducing, cuts curr_energy in half
   void halfEnergy() {
-    _curr_energy = _curr_energy / 2;
+    _curr_energy = _max_energy / 2;
   }
 
   double distFromCreature(creature c) {
@@ -251,11 +257,6 @@ private:
   uint8_t _vision;      // Distance the creature can see
   uint8_t _energy;      // Max energy of the creature
 
-  /*
-  if (_status == 1) {
-    color = (uint8_t)rgb32(219, 112, 147);
-  }
-  */
 };
 
 class plant {

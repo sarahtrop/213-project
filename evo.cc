@@ -4,9 +4,9 @@
 #include <pthread.h>
 #include <thread>
 
+#include "threads.hh"
 #include "creature.hh"
 #include "gui.hh"
-#include "threads.hh"
 
 using namespace std;
 
@@ -20,6 +20,7 @@ void updateCreatures();
 
 // Draw a circle on a bitmap based on this creature's position and radius
 void drawCreature(bitmap* bmp, creature c);
+// Draw a random plant for eating
 void drawPlant(bitmap* bmp, plant p);
 
 // Find the nearest food source and change velocity vector
@@ -27,13 +28,17 @@ void findNearestFood(creature * c);
 
 // Find the nearest herbivore to eat and change velocity vectors
 void findNearestHerbivore(creature* c);
+// If you are an herbivore, run away from carnivores near you
+void runAway(creature* c);
 
 // Find a buddy for reproduction
 bool findNearestBuddy(creature* c);
-
 // Reproduce
 void reproduce(creature* c, creature* d);
+// Create new trait for reproduction
 uint8_t new_trait(creature* c, creature* d, char* trait);
+// check if the creatures are similar enough to reproduce
+bool reproductionSimilarity(creature* c, creature* d);
 
 // List of creatures
 vector<creature> creatures;
@@ -99,6 +104,11 @@ void drawCreature(bitmap* bmp, creature c) {
   double center_y = c.pos().y();
   double radius = c.radius();
   rgb32 border_color;
+  rgb32 inner_color = c.color();
+
+  if (c.status() == 1) { //If reproducing, turn pink
+    inner_color = rgb32(219, 112, 147);
+  }
 
   // Checking creature's food source to determine border color
   if (c.food_source() == 1) {
@@ -122,10 +132,10 @@ void drawCreature(bitmap* bmp, creature c) {
         }
         else {
           // Set this point, along with the mirrored points in the other three quads
-          bmp->set(center_x + x, center_y + y, c.color());
-          bmp->set(center_x + x, center_y - y, c.color());
-          bmp->set(center_x - x, center_y - y, c.color());
-          bmp->set(center_x - x, center_y + y, c.color());
+          bmp->set(center_x + x, center_y + y, inner_color);
+          bmp->set(center_x + x, center_y - y, inner_color);
+          bmp->set(center_x - x, center_y - y, inner_color);
+          bmp->set(center_x - x, center_y + y, inner_color);
         }
       }
     }
@@ -164,9 +174,12 @@ void updateCreatures(){
       creatures.erase(creatures.begin() + i);
       --i;
     }
+    if (creatures[i].status() != 2) {
+      printf("creature %d status: %d\n", i, creatures[i].status());
+    }
+    runAway(&creatures[i]);
     findNearestBuddy(&creatures[i]);
     findNearestFood(&creatures[i]);
-    findNearestHerbivore(&creatures[i]);
   }
   
   //This checks for collisions
@@ -202,8 +215,11 @@ void initCreatures() {
 
 // Finds the nearest food to a creature, and change velocity vector
 void findNearestFood(creature * c) {
-  // If a carnivore, not needed
-  if (c->food_source() == 1 || c->status() < 2) {
+  // If a carnivore, go find an herbivore
+  if (c->food_source() == 1) {
+    findNearestHerbivore(c);
+  }
+  else if (c->status() < 2) { // choose to reproduce or run away over eat
     return;
   }
 
@@ -245,24 +261,59 @@ void findNearestHerbivore(creature* c) {
   // Find the closest creature, and save it
   for (int i = 0; i < creatures.size(); i++) {
     creature* to_eat = &creatures[i];
-    double curr_dist = to_eat->distFromCreature(*c);
     // Make sure we are eating an herbivore
     if (to_eat->food_source() == 0) {
+      double curr_dist = to_eat->distFromCreature(*c);
       minDist = curr_dist;
       closest = to_eat;
     }
   }
 
+  // If the creature is not us, go towards it
+  // Also make the herbivore run away from us
   if (minDist != c->vision()) { 
     vec2d cPos = c->pos();
     vec2d ePos = closest->pos();
     vec2d towards = vec2d(ePos.x() - cPos.x(), ePos.y() - cPos.y());
     c->setVel(towards);
-    closest->setVel(towards); // CHRIS: Is this how the herbivore runs away?
     c->setStatus(2);
     closest->setStatus(0);
   }
 }
+
+void runAway(creature* c) {
+  // If you are a carnivore, you never have to run away
+  if (c->food_source() == 1) { 
+    return;
+  }
+
+  double minDist = c->vision();
+  creature* closest = (creature *)malloc(sizeof(creature));
+    
+  // Find the closest creature, and save it
+  for (int i = 0; i < creatures.size(); i++) {
+    creature* carnivore = &creatures[i];
+    // Make sure we are running from a carnivore
+    if (carnivore->food_source() == 1) {
+      double curr_dist = carnivore->distFromCreature(*c);
+      minDist = curr_dist;
+      closest = carnivore;
+    }
+  }
+
+  // If the creature is not us, RUN AWAY
+  if (minDist != c->vision()) { 
+    vec2d mePos = c->pos();
+    vec2d carnPos = closest->pos();
+    vec2d away = vec2d(carnPos.x() - mePos.x(), carnPos.y() - mePos.y());
+    c->setVel(away);
+    c->setStatus(0);
+  }
+  else {
+    c->setStatus(3);
+  }
+}
+
 
 // Finds the nearest buddy for reproduction
 bool findNearestBuddy(creature* c) {
@@ -283,13 +334,15 @@ bool findNearestBuddy(creature* c) {
         // Check qualifications for reproduction
         if (curr_dist < minDist &&
             buddy->food_source() == type &&
-            buddy->curr_energy() / buddy->max_energy() >= 0.7) {
+            buddy->curr_energy() / buddy->max_energy() >= 0.7 &&
+            reproductionSimilarity(c, buddy)) {
           minDist = curr_dist;
           closest = buddy;
         }
       }
     }
 
+    // go towards buddy
     if (closest->status() > 1 && minDist != c->vision()) { 
       vec2d cPos = c->pos();
       vec2d bPos = closest->pos();
@@ -309,59 +362,63 @@ bool findNearestBuddy(creature* c) {
 // Reproduce with new creature
 void reproduce(creature* c, creature* d) {
   // Create new baby creatures
-  creature baby1 = creature(c->food_source(), new_trait(c, d, (char*)"color"), new_trait(c, d, (char*)"size"), 
-    new_trait(c, d, (char*)"speed"), new_trait(c, d, (char*)"energy"), new_trait(c, d, (char*)"vision"));
-  creature baby2 = creature(c->food_source(), new_trait(c, d, (char*)"color"), new_trait(c, d, (char*)"size"), 
-    new_trait(c, d, (char*)"speed"), new_trait(c, d, (char*)"energy"), new_trait(c, d, (char*)"vision"));
+  creature baby = creature(c->food_source(), new_trait(c, d, (char*)"color"),
+                           new_trait(c, d, (char*)"size"), new_trait(c, d, (char*)"speed"),
+                           new_trait(c, d, (char*)"energy"), new_trait(c, d, (char*)"vision"));
 
-  // Add baby creatures to the vector
-  creatures.push_back(baby1);
-  creatures.push_back(baby2);
+  // Add baby creature to the vector
+  creatures.push_back(baby);
 
   // Deplete parents energy
   c->halfEnergy();
   d->halfEnergy();
 
-  // Set the status of the parents back to finding food
-  c->setStatus(2);
-  d->setStatus(2);
+  // Set the status of the parents back to doing nothing
+  c->setStatus(3);
+  d->setStatus(3);
 }
 
 // Create new trait from that of the parents
 uint8_t new_trait(creature* c, creature* d, char* trait) {
 
-  uint8_t parent1;
-  uint8_t parent2;
+  uint8_t parent1 = c->getTrait(trait);
+  uint8_t parent2 = d->getTrait(trait);
 
-  if (strcmp(trait, "color") == 0) {
-    parent1 = c->color_trait();
-    parent2 = d->color_trait();
+  int mut = rand() % 4;
+  int mutBit = -1;
+  if(mut == 0){ //25% chance of mutation
+    mutBit = rand() % 8; //Selects the bit for mutation
   }
-  else if (strcmp(trait, "size") == 0) {
-    parent1 = c->size_trait();
-    parent2 = d->size_trait();
-  }
-  else if (strcmp(trait, "speed") == 0) {
-    parent1 = c->speed_trait();
-    parent2 = d->speed_trait();
-  }
-  else if (strcmp(trait, "energy") == 0) {
-    parent1 = c->energy_trait();
-    parent2 = d->energy_trait();
-  }
-  else if (strcmp(trait, "vision") == 0) {
-    parent1 = c->vision_trait();
-    parent2 = d->vision_trait();
-  }
-
-  srand(time(NULL));
-  uint8_t ret;
-  for (int i = 0; i < 8;  i++) {
+  
+  uint8_t ret; //The new value for the creature
+  for (int i = 0; i < 8;  i++) { //For each bit in the trait
     int parent = rand() % 2;
-    if (parent == 0) {
-      // FLIPPING BITS OF THE PARENTS 
-      // TODO: CHRIS
+    if (parent == 0) { //Take trait from parent1
+      if((uint8_t)(2^i) && parent1){ //If the bit in the ith position is a 1, add a 1 in that position
+        ret += (uint8_t)(2^i);
+      }
+    }
+    else{ //take trait from parent 2
+      if((uint8_t)(2^i) && parent2){ //If the bit in the ith position is a 1, add a 1 in that position
+        ret += (uint8_t)(2^i);
+      }
     }
   }
+
+  if(mutBit != -1){ // If we are mutating, mutate
+    if(ret && (uint8_t)(2^mutBit) == 1){
+      ret -= (uint8_t)(2^mutBit);
+    }
+    else{
+      ret += (uint8_t)(2^mutBit);
+    }
+  }
+  
   return ret;
+}
+
+// Check if the creatures are similar enough to reproduce
+bool reproductionSimilarity(creature* c, creature* d) {
+  
+
 }
