@@ -38,7 +38,7 @@ bool findNearestBuddy(creature* c);
 // Reproduce
 void reproduce(creature* c, creature* d);
 // Create new trait for reproduction
-uint8_t new_trait(creature* c, creature* d, char* trait);
+uint8_t new_trait(creature* c, creature* d, int trait);
 // check if the creatures are similar enough to reproduce
 bool reproductionSimilarity(creature* c, creature* d);
 
@@ -372,7 +372,7 @@ bool findNearestBuddy(creature* c) {
 // Reproduce with new creature
 void reproduce(creature* c, creature* d) {
   // Create new baby creatures
-  creature baby = creature(c->food_source(), new_trait(c, d, 0, new_trait(c, d, 1), 
+  creature baby = creature(c->food_source(), new_trait(c, d, 0), new_trait(c, d, 1), 
                         new_trait(c, d, 2), new_trait(c, d, 3), new_trait(c, d, 4));
 
   // Add baby creature to the vector
@@ -434,7 +434,7 @@ bool reproductionSimilarity(creature* c, creature* d) {
     uint8_t p1 = c->getTrait(i);
     uint8_t p2 = d->getTrait(i);
     for (int j = 0; j < 8; j++) { // iterate over bits in trait
-      if (((uint8_t)(2^i) && p1) != ((uint8_t)(2^i) && p2) {
+      if (((uint8_t)(2^i) && p1) != ((uint8_t)(2^i) && p2)) {
         traits[i] = false; // store which traits are the same between both parents (true)
       }
     }
