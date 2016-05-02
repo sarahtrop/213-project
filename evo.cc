@@ -5,6 +5,8 @@
 #include <vector>
 #include <pthread.h>
 #include <thread>
+#include <stdlib.h>
+#include <ctime>
 
 #include "threads.hh"
 #include "creature.hh"
@@ -82,7 +84,7 @@ int main(int argc, char** argv) {
     bmp.darken(0.60);
 
     double prob = rand() % 10;
-    if(prob <= 5){
+    if(prob <= 9){
       plant * newPlant = new plant();
       plants.push_back(newPlant);
     }
@@ -397,8 +399,6 @@ void reproduce(creature* c, creature* d) {
   creature * baby = new creature(c->food_source(), new_trait(c, d, 0), new_trait(c, d, 1), 
                         new_trait(c, d, 2), new_trait(c, d, 3), new_trait(c, d, 4));
 
-  printf("New Creature: \n\tFood: %d\n\tColor: %d\n\tSize: %d\n\tSpeed: %d\n\tEnergy: %d\n\tVision: %d\n", baby->food_source(), baby->getTrait(0), baby->getTrait(1), baby->getTrait(2), baby->getTrait(3), baby->getTrait(4));
-
   // Check that the baby is not on top of another creature
   generatePos(baby);
 
@@ -412,7 +412,6 @@ void reproduce(creature* c, creature* d) {
 
 // Create new trait from that of the parents
 uint8_t new_trait(creature* c, creature* d, int trait) {
-  srand(time(NULL));
 
   uint8_t parent1 = c->getTrait(trait);
   uint8_t parent2 = d->getTrait(trait);
@@ -427,23 +426,23 @@ uint8_t new_trait(creature* c, creature* d, int trait) {
   for (int i = 0; i < 8;  i++) { //For each bit in the trait
     int parent = rand() % 2;
     if (parent == 0) { //Take trait from parent1
-      if((uint8_t)(2^i) && parent1){ //If the bit in the ith position is a 1, add a 1 in that position
-        ret += (uint8_t)(2^i);
+      if((uint8_t)(pow(2,i)) && parent1){ //If the bit in the ith position is a 1, add a 1 in that position
+        ret += (uint8_t)(pow(2,i));
       }
     }
     else{ //take trait from parent 2
-      if((uint8_t)(2^i) && parent2){ //If the bit in the ith position is a 1, add a 1 in that position
-        ret += (uint8_t)(2^i);
+      if((uint8_t)(pow(2,i)) && parent2){ //If the bit in the ith position is a 1, add a 1 in that position
+        ret += (uint8_t)(pow(2,i));
       }
     }
   }
 
   if(mutBit != -1){ // If we are mutating, mutate
-    if(ret && (uint8_t)(2^mutBit) == 1){
-      ret -= (uint8_t)(2^mutBit);
+    if(ret && (uint8_t)(pow(2,mutBit)) == 1){
+      ret -= (uint8_t)(pow(2,mutBit));
     }
     else{
-      ret += (uint8_t)(2^mutBit);
+      ret += (uint8_t)(pow(2,mutBit));
     }
   }
   
