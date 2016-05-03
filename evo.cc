@@ -258,6 +258,7 @@ void findNearestFood(creature * c) {
   // If a carnivore, go find an herbivore
   if (c->food_source() == 1) {
     findNearestHerbivore(c);
+    return;
   }
   else if (c->status() < 2) { // choose to reproduce or run away over eat
     return;
