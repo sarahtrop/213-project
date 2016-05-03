@@ -18,7 +18,7 @@
 
 using namespace std;
 
-#define NUM_CREATURES 20
+#define NUM_CREATURES 5
 
 // Update all creatures in the simulation
 void updateCreatures();
@@ -194,18 +194,20 @@ void updateCreatures(){
   }
   
   //This checks for collisions
-  for(int i=0; i<creatures.size(); ++i){
+  for(int i=0; i<creatures.size(); ++i) {
+
     //Check for creature collisions
-    for(int j=i+1; j < creatures.size(); ++j){
+    for(int j=i+1; j < creatures.size(); ++j) {
       bool * collideStatus = creatures[i]->checkCreatureCollision(creatures[j]);
-      if (collideStatus[0]) {
+      if (collideStatus[0]) { // If trying to reproduce
         reproduce(creatures[i], creatures[j]);
       }
-      if (collideStatus[1]){
-        creatures[i]->incEnergy((creatures[j]->curr_energy()/10));
+      if (collideStatus[1]) { // If trying to eat
+        creatures[i]->incEnergy((creatures[j]->curr_energy())/10);
         creatures.erase(creatures.begin() + j);
       }
     }
+
     //Check for plant collisions
     if(creatures[i]->food_source() == 0){
       for(int j = 0; j < plants.size(); ++j){

@@ -20,6 +20,7 @@
 
 #include "vec2d.hh"
 
+// CREATURE CLASS
 class creature {
 public:
   
@@ -142,10 +143,12 @@ public:
     _vel = vel.normalized();
   }
 
+  // If a creature is bouncing off another
   bool bouncing(){
     return _bouncing;
   }
 
+  // Set bouncing boolean
   void setBouncing(bool val){
     _bouncing = val;
   }
@@ -184,6 +187,7 @@ public:
     _curr_energy -= (_max_energy / 2);
   }
 
+  // Calculate the distance from another creature
   double distFromCreature(creature c) {
     if (c.food_source() == _food_source) {
       vec2d cPos = c.pos();
@@ -193,6 +197,7 @@ public:
     }
   }
 
+  // Update the position of a creature
   void update(){
     if(_pos.y()-radius() < 0 && _vel.y() < 0){
       setVel(vec2d(_vel.x(), -1*_vel.y()));
@@ -210,13 +215,14 @@ public:
     _pos += (_vel * speed());
   }
 
+  // Check if creatures are colliding
   bool * checkCreatureCollision(creature * partner){
     vec2d partPos = (*partner).pos();
     vec2d partVel = (*partner).vel();
     bool * colStatus = (bool*)malloc(sizeof(bool)*2);
 
-    colStatus[0] = false;
-    colStatus[1] = false;
+    colStatus[0] = false; // for reproduction
+    colStatus[1] = false; // for carnivores eating herbivores
     
     double dist = sqrt(pow((_pos.x() - partPos.x()), 2) + pow((_pos.y() - partPos.y()), 2));
     //If a collision has occured
@@ -230,7 +236,8 @@ public:
         colStatus[0] = true;
       }
 
-      if (_food_source == 1 && partner->food_source() == 0 && canEat(partner)){
+      // If colliding because we are trying to eat someone else
+      if (_food_source == 1 && partner->food_source() == 0){// && canEat(partner)){
         colStatus[1] = true;
       }
 
@@ -249,16 +256,18 @@ public:
     return colStatus;
   }
 
+  // Check is one creature can eat another
   bool canEat(creature * partner){
     bool res = false;
-    if(_food_source == 1){
-      if(sqrt(pow(((double)_size / 255) - ((double)partner->getTrait(1) / 255), 2)) <= .1){
+    if(_food_source == 1) {
+      if(sqrt(pow(((double)_size / 255) - ((double)partner->getTrait(1) / 255), 2)) <= .1) {
         res = true;
       }
     }
     return res;
   }
 
+  // Check if creatures vectors intersect
   bool intersects(creature * partner){
     vec2d partPos = (*partner).pos();
     vec2d partVel = (*partner).vel();
@@ -272,6 +281,7 @@ public:
     return false;
   }
   
+// Creatures fields
 private:
   pthread_mutex_t lock;
   
@@ -298,8 +308,9 @@ private:
   uint8_t _vision;      // Distance the creature can see
   uint8_t _energy;      // Max energy of the creature
 
-};
+}; // end of creature class
 
+// PLANT CLASS
 class plant {
 public:
   
@@ -308,13 +319,13 @@ public:
     pthread_mutex_init(&lock, NULL);
   }
     
-  // Get the position of this creature
+  // Get the position of this plant
   vec2d pos() { return _pos; }
   
-  double radius(){
-    return _radius;
-  }
+  // Get the radius of the plant
+  double radius(){ return _radius; }
 
+  // Check the plant is colliding with a creature
   bool checkCreatureCollision(creature * c){
     vec2d cPos = (*c).pos();
     
@@ -326,20 +337,23 @@ public:
     return false;
   }
 
+  // Check the distance from a creature
   double distFromCreature(creature c) {
     vec2d cPos = c.pos();
     return sqrt(pow((_pos.x() - cPos.x()), 2) + pow((_pos.y() - cPos.y()), 2));
   }
 
+  // Set the position of hte plant
   void setPos(){
     _pos = vec2d(rand() % (WIDTH - (int)ceil(2*_radius)) + _radius, rand() % (HEIGHT - (int)ceil(2*_radius)) + _radius);
   }
   
-private:
-  pthread_mutex_t lock;
+  //Plant fields
+  private:
+    pthread_mutex_t lock;
   
-  vec2d _pos;
-  double _radius;
-};
+    vec2d _pos;
+    double _radius;
+}; // end of plant class
 
 #endif
