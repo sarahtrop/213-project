@@ -34,9 +34,6 @@ void initCreatures();
 // Perform the functions needed on each creature each frame
 void handleTick(int i);
 
-// Generates a position for the creature guaranteed to not be on top of another creature
-//void generatePos(creature* c);
-
 // Find the nearest food source and change velocity vector
 void findNearestFood(creature * c);
 
@@ -246,7 +243,6 @@ void handleTick(int i) {
       runAway(creatures[i]);
       findNearestBuddy(creatures[i]);
       findNearestFood(creatures[i]);
-      //findNearestHerbivore(creatures[i]);
     }
     else{
       creatures[i]->setBouncing(false);
@@ -256,21 +252,6 @@ void handleTick(int i) {
     creatures[i]->decEnergy();
   }
 }
-
-// Generates a random position for a creature not on top of another one
-/*void generatePos(creature* c) {
-  vec2d init_pos = c->pos();
-  for (int i = 0; i < creatures.size(); i++) {
-    vec2d other_pos = creatures[i]->pos();
-    if (init_pos.x() == other_pos.x() && init_pos.y() == other_pos.y()) {
-      c->setPos();
-      init_pos = c->pos();
-    }
-    else {
-      return;
-    }
-  }
-}*/
 
 // Finds the nearest food to a creature, and change velocity vector
 void findNearestFood(creature * c) {
@@ -314,25 +295,26 @@ void findNearestHerbivore(creature* c) {
     return;
   }
   
+  // Set the minimum distance as the farthest it can be to be visible
   double minDist = c->vision();
+  // Se the current closest creature to the first one
   creature* closest = (creature *)malloc(sizeof(creature));
-    
   // Find the closest creature, and save it
   for (int i = 0; i < creatures.size(); i++) {
-    creature* to_eat = creatures[i];
     // Make sure we are eating an herbivore
-    if (to_eat->food_source() == 0) {
-      double curr_dist = to_eat->distFromCreature(*c);
-      if(minDist > curr_dist){
+    if (creatures[i]->food_source() == 0) {
+      double curr_dist = creatures[i]->distFromCreature(*c);
+      if(curr_dist < minDist){
         minDist = curr_dist;
-        closest = to_eat;
+        closest = creatures[i];
       }
     }
   }
 
-  // If the creature is not us, go towards it
-  // Also make the herbivore run away from us
+  // If the distance is still vision, we found nothing, so don't reset the vector
   if (minDist != c->vision()) { 
+    // Now that we have the closest creature for eating,
+    // change the creature's velocity vector to go towards that creature
     vec2d cPos = c->pos();
     vec2d ePos = closest->pos();
     vec2d towards = ePos - cPos;
@@ -425,9 +407,6 @@ void reproduce(creature* c, creature* d) {
   // Create new baby creatures
   creature * baby = new creature(c->food_source(), new_trait(c, d, 0), new_trait(c, d, 1), 
                         new_trait(c, d, 2), new_trait(c, d, 3), new_trait(c, d, 4));
-
-  // Check that the baby is not on top of another creature
-  //generatePos(baby);
 
   // Add baby creature to the vector
   creatures.push_back(baby);
