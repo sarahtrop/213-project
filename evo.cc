@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include <cmath>
 
-#include "threads.hh"
 #include "creature.hh"
 #include "gui.hh"
 
@@ -92,7 +91,7 @@ int main(int argc, char** argv) {
       plant * newPlant = new plant();
       plants.push_back(newPlant);
     }
-
+    
     //Draw plants
     for (int i = 0; i < plants.size(); ++i){
       drawPlant(&bmp, plants[i]);
@@ -190,7 +189,7 @@ void drawPlant(bitmap* bmp, plant * p){
 void updateCreatures(){
   //This updates position and checks for energy level
   for(int i=0; i<creatures.size(); ++i) {
-    handleTick(i);
+    addTask(&handleTick, i);
   }
   
   //This checks for collisions
@@ -228,7 +227,7 @@ void initCreatures() {
     creature * new_creature = new creature(0, 128, 128, 128, 128, 128);
     creatures.push_back(new_creature);
   }
-  for (int i = 0; i < NUM_CREATURES/5; ++i){
+  for (int i = 0; i < NUM_CREATURES / 5; ++i){
     creature * new_creature = new creature(1, 128, 128, 128, 128, 128);
     creatures.push_back(new_creature);
   }
@@ -236,23 +235,26 @@ void initCreatures() {
 
 // Perform the functions needed on each creature each frame
 void handleTick(int i) {
-  if(creatures[i]->curr_energy() <= 0){
-    creatures.erase(creatures.begin() + i);
+  pthread_mutex_lock(&creatures[i]->lock); // lock this creature
+  
+  if(creatures[i]->curr_energy() <= 0){ // if the creature has no energy
+    creatures.erase(creatures.begin() + i); // die
     --i;
   }
   else{
-    if(!creatures[i]->bouncing()){
-      runAway(creatures[i]);
-      findNearestBuddy(creatures[i]);
-      findNearestFood(creatures[i]);
+    if(!creatures[i]->bouncing()){ // if the creature is not bouncing off another
+      runAway(creatures[i]); // either run away
+      findNearestBuddy(creatures[i]); // or find a buddy
+      findNearestFood(creatures[i]); // or find food
     }
     else{
       creatures[i]->setBouncing(false);
     }
     
-    creatures[i]->update();
-    creatures[i]->decEnergy();
+    creatures[i]->update(); // update the creatures position and such
+    creatures[i]->decEnergy(); // decrement the energy of the creature
   }
+  pthread_mutex_unlock(&creatures[i]->lock); // unlock the creature
 }
 
 // Finds the nearest food to a creature, and change velocity vector
@@ -333,7 +335,6 @@ void runAway(creature* c) {
   }
 
   double minDist = c->vision();
-  creature* closest = (creature *)malloc(sizeof(creature));
   bool found = false;
   vec2d away = vec2d(0,0);
     
@@ -407,9 +408,10 @@ void reproduce(creature* c, creature* d) {
   c->setStatus(3);
   d->setStatus(3);
   
-  // Create new baby creatures
-  creature * baby = new creature(c->food_source(), new_trait(c, d, 0), new_trait(c, d, 1), 
-                        new_trait(c, d, 2), new_trait(c, d, 3), new_trait(c, d, 4));
+  // Create new baby creature
+  creature * baby = new creature(c->food_source(), new_trait(c, d, 0),
+                                 new_trait(c, d, 1), new_trait(c, d, 2),
+                                 new_trait(c, d, 3), new_trait(c, d, 4));
 
   // Add baby creature to the vector
   creatures.push_back(baby);
@@ -433,7 +435,7 @@ uint8_t new_trait(creature* c, creature* d, int trait) {
   
   uint8_t ret; //The new value for the creature
   for (int i = 0; i < 8;  i++) { //For each bit in the trait
-    int parent = rand() % 2;
+    int parent = rand() % 2; // Select a random parent
     if (parent == 0) { //Take trait from parent1
       if((uint8_t)(pow(2,i)) & parent1){ //If the bit in the ith position is a 1, add a 1 in that position
         ret += (uint8_t)(pow(2,i));

@@ -19,12 +19,16 @@
 #include <thread>
 
 #include "vec2d.hh"
+#include "threads.hh"
 
 // CREATURE CLASS
 class creature {
 public:
+  // the lock for the creature
+  pthread_mutex_t lock;
   
-  creature(int food_source, uint8_t color, uint8_t size, uint8_t speed, uint8_t energy, uint8_t vision) : 
+  creature(int food_source, uint8_t color, uint8_t size,
+           uint8_t speed, uint8_t energy, uint8_t vision) : 
     _food_source(food_source),
     _size(size),
     _speed(speed),
@@ -32,16 +36,17 @@ public:
     _vision(vision),
     _bouncing(false),
     _color(color){
-      setPos();
-      setVel();
-      setMaxEnergy();
-      setMetabolism();
-      _curr_energy = (double)_max_energy / 2;
-      pthread_mutex_init(&lock, NULL);
-      _status = 3;
+    setPos();
+    setVel();
+    setMaxEnergy();
+    setMetabolism();
+    _curr_energy = (double)_max_energy / 2;
+    pthread_mutex_init(&lock, NULL);
+    _status = 3;
   }
 
-    creature(int food_source, uint8_t color, uint8_t size, uint8_t speed, uint8_t energy, uint8_t vision, vec2d pos, vec2d vel) : 
+  creature(int food_source, uint8_t color, uint8_t size,
+           uint8_t speed, uint8_t energy, uint8_t vision, vec2d pos, vec2d vel) : 
     _food_source(food_source),
     _size(size),
     _speed(speed),
@@ -49,13 +54,13 @@ public:
     _vision(vision),
     _bouncing(false),
     _color(color){
-      setPos(pos);
-      setVel(vel);
-      setMaxEnergy();
-      setMetabolism();
-      _curr_energy = (double)_max_energy / 2;
-      pthread_mutex_init(&lock, NULL);
-      _status = 3;
+    setPos(pos);
+    setVel(vel);
+    setMaxEnergy();
+    setMetabolism();
+    _curr_energy = (double)_max_energy / 2;
+    pthread_mutex_init(&lock, NULL);
+    _status = 3;
   }
   
   // Get the position of this creature
@@ -65,9 +70,7 @@ public:
   vec2d vel() { return _vel; }
   
   // Get the color of this creature
-  rgb32 color() {
-    return rgb32((int)_color, (int)_color, (int)_color);
-  }
+  rgb32 color() { return rgb32((int)_color, (int)_color, (int)_color); }
 
   // Get the food source of this creature
   int food_source() { return _food_source; }
@@ -90,24 +93,24 @@ public:
   // Get a trait 
   uint8_t getTrait(int trait) {
     switch(trait) {
-      case 0:
-        return _color; 
-        break;
-      case 1:
-        return _size;
-        break;
-      case 2:
-        return _speed;
-        break;
-      case 3:
-        return _energy;
-        break;
-      case 4:
-        return _vision;
-        break;
-      default:
-        return (uint8_t)-1;
-        break;
+    case 0:
+      return _color; 
+      break;
+    case 1:
+      return _size;
+      break;
+    case 2:
+      return _speed;
+      break;
+    case 3:
+      return _energy;
+      break;
+    case 4:
+      return _vision;
+      break;
+    default:
+      return (uint8_t)-1;
+      break;
     }
   }
 
@@ -115,10 +118,7 @@ public:
   int status() { return _status; }
 
   // Set the status
-  void setStatus(int stat) {
-    _status = stat;
-  }
-
+  void setStatus(int stat) { _status = stat; }
 
   //Randomly sets the position of the creature within passed bounds
   void setPos(){
@@ -126,9 +126,7 @@ public:
   }
 
   //Sets the position to the given position
-  void setPos(vec2d pos){
-    _pos = pos; 
-  }
+  void setPos(vec2d pos) { _pos = pos; }
 
   //Sets the velocity vector to a randomized normal vector
   void setVel(){
@@ -139,19 +137,13 @@ public:
   }
 
   //Sets the velocity vector to the normalized passed vector
-  void setVel(vec2d vel){
-    _vel = vel.normalized();
-  }
+  void setVel(vec2d vel){ _vel = vel.normalized(); }
 
   // If a creature is bouncing off another
-  bool bouncing(){
-    return _bouncing;
-  }
+  bool bouncing(){ return _bouncing; }
 
   // Set bouncing boolean
-  void setBouncing(bool val){
-    _bouncing = val;
-  }
+  void setBouncing(bool val){ _bouncing = val; }
 
   //Sets the maximum energy the creature can have
   void setMaxEnergy(){
@@ -169,9 +161,7 @@ public:
   }
 
   // Increments current energy by specified amount
-  void incEnergy(double add) {
-    _curr_energy = fmin(_max_energy, _curr_energy + add);
-  }
+  void incEnergy(double add) { _curr_energy = fmin(_max_energy, _curr_energy + add); }
 
   // Decrements energy as time passes
   void decEnergy() {
@@ -182,10 +172,8 @@ public:
       _curr_energy = 0;
   }
 
-// Used when reproducing, cuts curr_energy in half
-  void halfEnergy() {
-    _curr_energy -= (_max_energy / 2);
-  }
+  // Used when reproducing, cuts curr_energy in half
+  void halfEnergy() {  _curr_energy -= (_max_energy / 2); }
 
   // Calculate the distance from another creature
   double distFromCreature(creature c) {
@@ -281,10 +269,8 @@ public:
     return false;
   }
   
-// Creatures fields
-private:
-  pthread_mutex_t lock;
-  
+  // Creatures fields
+private:  
   double _mass;       // The mass of this creature
   vec2d _pos;         // The position of this creature
   vec2d _prev_pos;    // The previous position of this creature
@@ -349,11 +335,11 @@ public:
   }
   
   //Plant fields
-  private:
-    pthread_mutex_t lock;
+private:
+  pthread_mutex_t lock;
   
-    vec2d _pos;
-    double _radius;
+  vec2d _pos;
+  double _radius;
 }; // end of plant class
 
 #endif
