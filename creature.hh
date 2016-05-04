@@ -10,8 +10,8 @@
 
 #define FPS 50
 // Screen size
-#define WIDTH 960
-#define HEIGHT 720
+#define WIDTH 480
+#define HEIGHT 360
 
 #include <cmath>
 #include <ctime>
@@ -76,7 +76,7 @@ public:
   double radius() { return ((double)_size / 255.0) * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS; }
 
   // Get the speed of this creature
-  double speed() { return ((double)_speed/ (2 * FPS)) * ((1 -(_size / 255)) * 1.5 + .5); }
+  double speed() { return ((double)_speed/ (3 * FPS)) * pow(((1 -(_size / 255)) * 1.5 + .5),2); }
 
   // Get the current energy of this creature
   double curr_energy() { return (double)_curr_energy; }
@@ -216,13 +216,10 @@ public:
   }
 
   // Check if creatures are colliding
-  bool * checkCreatureCollision(creature * partner){
+  bool checkCreatureCollision(creature * partner){
     vec2d partPos = (*partner).pos();
     vec2d partVel = (*partner).vel();
-    bool * colStatus = (bool*)malloc(sizeof(bool)*2);
-
-    colStatus[0] = false; // for reproduction
-    colStatus[1] = false; // for carnivores eating herbivores
+    bool reproducing = false;
     
     double dist = sqrt(pow((_pos.x() - partPos.x()), 2) + pow((_pos.y() - partPos.y()), 2));
     //If a collision has occured
@@ -233,13 +230,14 @@ public:
 
       // If colliding because we've found a buddy
       if (_status == 1 && partner->status() == 1) {
-        colStatus[0] = true;
+        reproducing = true;
       }
 
       // If colliding because we are trying to eat someone else
-      if (_food_source == 1 && partner->food_source() == 0){// && canEat(partner)){
+      /*if (_food_source == 1 && partner->food_source() == 0 && canEat(partner)){
+        printf("IN FUNCT: true \n");
         colStatus[1] = true;
-      }
+        }*/
 
       //https://nicoschertler.wordpress.com/2013/10/07/elastic-collision-of-circles-and-spheres/  
       vec2d normal = vec2d(_pos.x() - partPos.x(), _pos.y() - partPos.y()).normalized();
@@ -253,17 +251,19 @@ public:
       setVel(_vel - normal * p);
       (*partner).setVel(partVel + normal * p);
     }
-    return colStatus;
+    return reproducing;
   }
 
   // Check is one creature can eat another
   bool canEat(creature * partner){
     bool res = false;
     if(_food_source == 1) {
-      if(sqrt(pow(((double)_size / 255) - ((double)partner->getTrait(1) / 255), 2)) <= .1) {
+      if((double)_size*1.1 > (double)partner->getTrait(1)) {
+      //if(sqrt(pow(((double)_size / 255) - ((double)partner->getTrait(1) / 255), 2)) <= .1) {
         res = true;
       }
     }
+    printf("CanEat? %s\n", res ? "true" : "false");
     return res;
   }
 

@@ -56,10 +56,6 @@ unsigned GetTickCount();
 vector<creature*> creatures;
 vector<plant*> plants;
 
-// Screen size
-#define WIDTH 960
-#define HEIGHT 720
-
 int main(int argc, char** argv) {
   // Seed the random number generator
   srand(time(NULL));
@@ -88,7 +84,7 @@ int main(int argc, char** argv) {
     bmp.darken(0.60);
 
     double prob = rand() % 10;
-    if(prob <= 9){
+    if(prob <= 4){
       plant * newPlant = new plant();
       plants.push_back(newPlant);
     }
@@ -198,14 +194,23 @@ void updateCreatures(){
 
     //Check for creature collisions
     for(int j=i+1; j < creatures.size(); ++j) {
-      bool * collideStatus = creatures[i]->checkCreatureCollision(creatures[j]);
-      if (collideStatus[0]) { // If trying to reproduce
+      bool reproducing = creatures[i]->checkCreatureCollision(creatures[j]);
+      if (reproducing) { // If trying to reproduce
         reproduce(creatures[i], creatures[j]);
       }
-      if (collideStatus[1]) { // If trying to eat
+
+      if(creatures[i]->food_source() == 1 && creatures[j]->food_source() == 0){
+        if(creatures[i]->bouncing() && creatures[i]->canEat(creatures[j])){
+          creatures[i]->incEnergy((creatures[j]->curr_energy())/10);
+          creatures.erase(creatures.begin() + j);
+          --j;
+        }
+      }
+      
+      /*if (collideStatus[1]) { // If trying to eat
         creatures[i]->incEnergy((creatures[j]->curr_energy())/10);
         creatures.erase(creatures.begin() + j);
-      }
+        }*/
     }
 
     //Check for plant collisions
@@ -375,11 +380,10 @@ void findNearestBuddy(creature* c) {
       double curr_dist = buddy->distFromCreature(*c);
       if (curr_dist != 0) { // Make sure our buddy is not us
         // Check qualifications for reproduction
-        if (curr_dist < minDist && //Did we find a buddy
+        if (curr_dist < minDist && //Did we find a closer buddy
             buddy->food_source() == type && //Is the buddy our food type
-            buddy->curr_energy() / buddy->max_energy() >= 0.7 && //Does buddy have the energy
-            reproductionSimilarity(c, buddy) && //Are we the same species
-            buddy->status() > 1) { //Is buddy not someone else's buddy
+            (buddy->curr_energy() / buddy->max_energy()) >= 0.7 && //Does buddy have the energy
+            reproductionSimilarity(c, buddy)){ //Are we the same species
           minDist = curr_dist;
           closest = buddy;
         }
@@ -387,15 +391,15 @@ void findNearestBuddy(creature* c) {
     }
 
     // go towards buddy
-    if (closest->status() > 1 && minDist != c->vision()) { 
+    if (closest->status() > 0 && minDist != c->vision()) { 
       vec2d cPos = c->pos();
       vec2d bPos = closest->pos();
       vec2d towardsB = vec2d(bPos.x() - cPos.x(), bPos.y() - cPos.y());
-      vec2d towardsC = vec2d(cPos.x() - bPos.x(), cPos.y() - bPos.y());
+      //vec2d towardsC = vec2d(cPos.x() - bPos.x(), cPos.y() - bPos.y());
       c->setVel(towardsB);
-      closest->setVel(towardsC);
+      //closest->setVel(towardsC);
       c->setStatus(1);
-      closest->setStatus(1);
+      //closest->setStatus(1);
     }
   }
 }
