@@ -207,7 +207,10 @@ public:
   bool checkCreatureCollision(creature * partner){
     vec2d partPos = (*partner).pos();
     vec2d partVel = (*partner).vel();
-    bool reproducing = false;
+    bool * colStatus = (bool*)malloc(sizeof(bool)*2);
+
+    colStatus[0] = false;
+    colStatus[1] = false;
     
     double dist = sqrt(pow((_pos.x() - partPos.x()), 2) + pow((_pos.y() - partPos.y()), 2));
     //If a collision has occured
@@ -218,14 +221,13 @@ public:
 
       // If colliding because we've found a buddy
       if (_status == 1 && partner->status() == 1) {
-        reproducing = true;
+        colStatus[0] = true;
       }
 
       // If colliding because we are trying to eat someone else
-      /*if (_food_source == 1 && partner->food_source() == 0 && canEat(partner)){
-        printf("IN FUNCT: true \n");
+      if (_food_source == 1 && partner->food_source() == 0 && canEat(partner)){
         colStatus[1] = true;
-        }*/
+      }
 
       //https://nicoschertler.wordpress.com/2013/10/07/elastic-collision-of-circles-and-spheres/  
       vec2d normal = vec2d(_pos.x() - partPos.x(), _pos.y() - partPos.y()).normalized();
@@ -247,11 +249,9 @@ public:
     bool res = false;
     if(_food_source == 1) {
       if((double)_size*1.1 > (double)partner->getTrait(1)) {
-      //if(sqrt(pow(((double)_size / 255) - ((double)partner->getTrait(1) / 255), 2)) <= .1) {
         res = true;
       }
     }
-    printf("CanEat? %s\n", res ? "true" : "false");
     return res;
   }
 

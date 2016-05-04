@@ -191,25 +191,27 @@ void updateCreatures(){
   //This checks for collisions
   for(int i=0; i<creatures.size(); ++i) {
 
+    bool * colStatus;
+
     //Check for creature collisions
     for(int j=i+1; j < creatures.size(); ++j) {
-      bool reproducing = creatures[i]->checkCreatureCollision(creatures[j]);
-      if (reproducing) { // If trying to reproduce
+      colStatus = creatures[i]->checkCreatureCollision(creatures[j]);
+      if (colStatus[0]) { // If trying to reproduce
         reproduce(creatures[i], creatures[j]);
       }
 
-      if(creatures[i]->food_source() == 1 && creatures[j]->food_source() == 0){
+      /*if(creatures[i]->food_source() == 1 && creatures[j]->food_source() == 0){
+        
         if(creatures[i]->bouncing() && creatures[i]->canEat(creatures[j])){
           creatures[i]->incEnergy((creatures[j]->curr_energy())/10);
           creatures.erase(creatures.begin() + j);
           --j;
         }
-      }
-      
-      /*if (collideStatus[1]) { // If trying to eat
-        creatures[i]->incEnergy((creatures[j]->curr_energy())/10);
-        creatures.erase(creatures.begin() + j);
         }*/
+    }
+
+    for(int j = 0; j < creatures.size(); ++j){
+
     }
 
     //Check for plant collisions
