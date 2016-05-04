@@ -13,18 +13,18 @@
 void queueRun();
 
 //Struct for arbitrary tasks to be fed into the thread pool
-typedef struct taskNode{
+typedef struct taskNode {
   taskNode * next;
   void (*task)(int i);
   int i;
-}taskNode_t;
+} taskNode_t;
 
 //The structure for the task Queue itself
-typedef struct taskQueue{
+typedef struct taskQueue {
   pthread_mutex_t lock;
   taskNode_t * head;
   taskNode_t * tail;
-}taskQueue_t;
+} taskQueue_t;
 
 // Initializes the task queue
 void initTaskQueue(taskQueue * q);
