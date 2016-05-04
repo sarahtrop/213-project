@@ -238,6 +238,7 @@ void handleTick(int i) {
   pthread_mutex_lock(&creatures[i]->lock); // lock this creature
   
   if(creatures[i]->curr_energy() <= 0){ // if the creature has no energy
+    pthread_mutex_unlock(&creatures[i]->lock); // unlock
     creatures.erase(creatures.begin() + i); // die
     --i;
   }
@@ -437,12 +438,14 @@ uint8_t new_trait(creature* c, creature* d, int trait) {
   for (int i = 0; i < 8;  i++) { //For each bit in the trait
     int parent = rand() % 2; // Select a random parent
     if (parent == 0) { //Take trait from parent1
-      if((uint8_t)(pow(2,i)) & parent1){ //If the bit in the ith position is a 1, add a 1 in that position
+      //If the bit in the ith position is a 1, add a 1 in that position
+      if((uint8_t)(pow(2,i)) & parent1){ 
         ret += (uint8_t)(pow(2,i));
       }
     }
     else{ //take trait from parent 2
-      if((uint8_t)(pow(2,i)) & parent2){ //If the bit in the ith position is a 1, add a 1 in that position
+      //If the bit in the ith position is a 1, add a 1 in that position
+      if((uint8_t)(pow(2,i)) & parent2){
         ret += (uint8_t)(pow(2,i));
       }
     }
