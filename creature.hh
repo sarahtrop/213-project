@@ -10,8 +10,8 @@
 
 #define FPS 50
 // Screen size
-#define WIDTH 480
-#define HEIGHT 360
+#define WIDTH 960
+#define HEIGHT 720
 
 #include <cmath>
 #include <ctime>
@@ -204,7 +204,7 @@ public:
   }
 
   // Check if creatures are colliding
-  bool checkCreatureCollision(creature * partner){
+  bool * checkCreatureCollision(creature * partner){
     vec2d partPos = (*partner).pos();
     vec2d partVel = (*partner).vel();
     bool * colStatus = (bool*)malloc(sizeof(bool)*2);
@@ -225,8 +225,19 @@ public:
       }
 
       // If colliding because we are trying to eat someone else
-      if (_food_source == 1 && partner->food_source() == 0 && canEat(partner)){
-        colStatus[1] = true;
+      if (_food_source == 1){
+        if(partner->food_source() == 0){
+          if(canEat(partner)){
+            colStatus[1] = true;
+          }
+        }
+      }
+      else{
+        if(partner->food_source() == 1){
+          if(partner->canEat(this)){
+            colStatus[1] = true;
+          }
+        }
       }
 
       //https://nicoschertler.wordpress.com/2013/10/07/elastic-collision-of-circles-and-spheres/  
@@ -241,7 +252,7 @@ public:
       setVel(_vel - normal * p);
       (*partner).setVel(partVel + normal * p);
     }
-    return reproducing;
+    return colStatus;
   }
 
   // Check is one creature can eat another

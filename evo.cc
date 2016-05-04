@@ -17,7 +17,7 @@
 
 using namespace std;
 
-#define NUM_CREATURES 5
+#define NUM_CREATURES 40
 
 // Update all creatures in the simulation
 void updateCreatures();
@@ -186,33 +186,35 @@ void updateCreatures(){
   //This updates position and checks for energy level
   for(int i=0; i<creatures.size(); ++i) {
     addTask(&handleTick, i);
+    //handleTick(i);
   }
+
+  //TODO: wait for handleTicks to finish
+
+  //TODO: can we handle collisions in parallel?
   
   //This checks for collisions
   for(int i=0; i<creatures.size(); ++i) {
 
-    bool * colStatus;
-
     //Check for creature collisions
     for(int j=i+1; j < creatures.size(); ++j) {
-      colStatus = creatures[i]->checkCreatureCollision(creatures[j]);
+      bool * colStatus = creatures[i]->checkCreatureCollision(creatures[j]);
       if (colStatus[0]) { // If trying to reproduce
         reproduce(creatures[i], creatures[j]);
       }
 
-      /*if(creatures[i]->food_source() == 1 && creatures[j]->food_source() == 0){
-        
-        if(creatures[i]->bouncing() && creatures[i]->canEat(creatures[j])){
-          creatures[i]->incEnergy((creatures[j]->curr_energy())/10);
-          creatures.erase(creatures.begin() + j);
-          --j;
+      if(colStatus[1]){
+        if(creatures[i]->food_source() == 1){
+          creatures[i]->incEnergy((creatures[j]->curr_energy())/5);
+          creatures[j]->incEnergy(-10000);
         }
-        }*/
+        else{
+          creatures[j]->incEnergy((creatures[i]->curr_energy())/5);
+          creatures[i]->incEnergy(-10000);
+        }
+      }
     }
 
-    for(int j = 0; j < creatures.size(); ++j){
-
-    }
 
     //Check for plant collisions
     if(creatures[i]->food_source() == 0){
@@ -234,7 +236,7 @@ void initCreatures() {
     creature * new_creature = new creature(0, 128, 128, 128, 128, 128);
     creatures.push_back(new_creature);
   }
-  for (int i = 0; i < NUM_CREATURES / 5; ++i){
+  for (int i = 0; i < NUM_CREATURES / 10; ++i){
     creature * new_creature = new creature(1, 128, 128, 128, 128, 128);
     creatures.push_back(new_creature);
   }
@@ -242,12 +244,11 @@ void initCreatures() {
 
 // Perform the functions needed on each creature each frame
 void handleTick(int i) {
-  pthread_mutex_lock(&creatures[i]->lock); // lock this creature
+  //pthread_mutex_lock(&creatures[i]->lock); // lock this creature
   
   if(creatures[i]->curr_energy() <= 0){ // if the creature has no energy
-    pthread_mutex_unlock(&creatures[i]->lock); // unlock
+    //pthread_mutex_unlock(&creatures[i]->lock); // unlock
     creatures.erase(creatures.begin() + i); // die
-    --i;
   }
   else{
     if(!creatures[i]->bouncing()){ // if the creature is not bouncing off another
@@ -261,8 +262,8 @@ void handleTick(int i) {
     
     creatures[i]->update(); // update the creatures position and such
     creatures[i]->decEnergy(); // decrement the energy of the creature
+    //pthread_mutex_unlock(&creatures[i]->lock); // unlock the creature
   }
-  pthread_mutex_unlock(&creatures[i]->lock); // unlock the creature
 }
 
 // Finds the nearest food to a creature, and change velocity vector
