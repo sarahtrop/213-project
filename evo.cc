@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
     bmp.darken(0.60);
 
     double prob = rand() % 10;
-    if(prob <= 4){
+    if(prob <= 9){
       plant * newPlant = new plant();
       plants.push_back(newPlant);
     }
@@ -240,6 +240,13 @@ void initCreatures() {
     creature * new_creature = new creature(1, 128, 128, 128, 128, 128);
     creatures.push_back(new_creature);
   }
+
+  /*creature * new_creature1 = new creature(0, 128, 128, 200, 128, 128);
+  creatures.push_back(new_creature1);
+
+  creature * new_creature2 = new creature(1, 128, 128, 128, 128, 0);
+  creatures.push_back(new_creature2);*/
+  
 }
 
 // Perform the functions needed on each creature each frame
@@ -317,7 +324,8 @@ void findNearestHerbivore(creature* c) {
   for (int i = 0; i < creatures.size(); i++) {
     // Make sure we are eating an herbivore
     if (creatures[i]->food_source() == 0) {
-      double curr_dist = creatures[i]->distFromCreature(*c);
+      double curr_dist = c->distFromCreature(*creatures[i]);
+      //printf("%f\n", curr_dist);
       if(curr_dist < minDist){
         minDist = curr_dist;
         closest = creatures[i];
@@ -326,7 +334,8 @@ void findNearestHerbivore(creature* c) {
   }
 
   // If the distance is still vision, we found nothing, so don't reset the vector
-  if (minDist != c->vision()) { 
+  if (minDist < c->vision()) {
+    //printf("%f < %f\n", minDist, c->vision());
     // Now that we have the closest creature for eating,
     // change the creature's velocity vector to go towards that creature
     vec2d cPos = c->pos();
@@ -421,6 +430,8 @@ void reproduce(creature* c, creature* d) {
                                  new_trait(c, d, 1), new_trait(c, d, 2),
                                  new_trait(c, d, 3), new_trait(c, d, 4));
 
+  baby->print();
+
   // Add baby creature to the vector
   creatures.push_back(baby);
 
@@ -441,7 +452,7 @@ uint8_t new_trait(creature* c, creature* d, int trait) {
     mutBit = rand() % 8; //Selects the bit for mutation
   }
   
-  uint8_t ret; //The new value for the creature
+  uint8_t ret = 0; //The new value for the creature
   for (int i = 0; i < 8;  i++) { //For each bit in the trait
     int parent = rand() % 2; // Select a random parent
     if (parent == 0) { //Take trait from parent1
@@ -459,13 +470,14 @@ uint8_t new_trait(creature* c, creature* d, int trait) {
   }
 
   if(mutBit != -1){ // If we are mutating, mutate
+    
     if(ret & (uint8_t)(pow(2,mutBit))){
       ret -= (uint8_t)(pow(2,mutBit));
     }
     else{
       ret += (uint8_t)(pow(2,mutBit));
     }
-  }
+  } 
   
   return ret;
 }

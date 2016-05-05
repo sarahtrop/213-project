@@ -62,6 +62,11 @@ public:
     pthread_mutex_init(&lock, NULL);
     _status = 3;
   }
+
+  //Debugging procedure
+  void print(){
+    printf("food_source: %d\ncolor: %d\nsize: %d\nspeed: %d\nenergy: %d\nvision: %d\n\n", _food_source, _color, _size, _speed, _energy, _vision);
+  }
   
   // Get the position of this creature
   vec2d pos() { return _pos; }
@@ -79,7 +84,7 @@ public:
   double radius() { return ((double)_size / 255.0) * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS; }
 
   // Get the speed of this creature
-  double speed() { return ((double)_speed/ (3 * FPS)) * pow(((1 -(_size / 255)) * 1.5 + .5),2); }
+  double speed() { return ((double)_speed/ (2 * FPS)) * pow(((1 -((double)_size / 255)) * 1.5 + .5),2); }
 
   // Get the current energy of this creature
   double curr_energy() { return (double)_curr_energy; }
@@ -157,7 +162,7 @@ public:
 
   // Increments current energy when food is eaten (inversely proportional to _energy)
   void incEnergy() {
-    _curr_energy = fmin(_max_energy, _curr_energy + FPS * ((1 - (_energy / 255)) * 1.5 + .5));
+    _curr_energy = fmin(_max_energy, _curr_energy + FPS * ((1 - ((double)_energy / 255)) * 1.5 + .5));
   }
 
   // Increments current energy by specified amount
@@ -177,12 +182,8 @@ public:
 
   // Calculate the distance from another creature
   double distFromCreature(creature c) {
-    if (c.food_source() == _food_source) {
-      vec2d cPos = c.pos();
-      return sqrt(pow((_pos.x() - cPos.x()), 2) + pow((_pos.y() - cPos.y()), 2));
-    } else {
-      return 0.0;
-    }
+    vec2d cPos = c.pos();
+    return sqrt(pow((_pos.x() - cPos.x()), 2) + pow((_pos.y() - cPos.y()), 2));
   }
 
   // Update the position of a creature
@@ -259,7 +260,7 @@ public:
   bool canEat(creature * partner){
     bool res = false;
     if(_food_source == 1) {
-      if((double)_size*1.1 > (double)partner->getTrait(1)) {
+      if((double)_size*1.1 >= (double)partner->getTrait(1)) {
         res = true;
       }
     }
