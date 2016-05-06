@@ -52,6 +52,7 @@ uint8_t new_trait(creature* c, creature* d, int trait);
 bool reproductionSimilarity(creature* c, creature* d);
 unsigned GetTickCount();
 void writeData();
+void generatePlants();
 
 
 // List of creatures
@@ -75,7 +76,7 @@ int main(int argc, char** argv) {
 
   ofstream file;
   file.open("data.txt", ios::trunc); //Clear File
-  file << "Plants,Herbivores,Carnivores\n";
+  file << "Plant Generation,Plants,Herbivores,Carnivores\n";
   file.close();
 
   file.open("traits.txt", ios::trunc); //Clear File
@@ -96,13 +97,7 @@ int main(int argc, char** argv) {
     // Darken the bitmap instead of clearing it to leave trails
     bmp.darken(0.60);
 
-    double prob = rand() % 10;
-    if(prob <= 9){
-      plant * newPlant = new plant();
-      plants.push_back(newPlant);
-      plant * newPlant1 = new plant();
-      plants.push_back(newPlant1);
-    }
+    generatePlants();
     
     //Draw plants
     for (int i = 0; i < plants.size(); ++i){
@@ -132,6 +127,31 @@ int main(int argc, char** argv) {
   }
   
   return 0;
+}
+
+void generatePlants(){
+  double rawPlants = cos(2*3.1415*frames/10000)+2;
+
+  printf("%f\n", rawPlants);
+
+  int f1 = rawPlants * 1000;
+  int f2 = (rawPlants - 1) * 1000;
+  int f3 = (rawPlants - 2) * 1000;
+
+  double prob = rand() % 1000;
+  
+  if(f1 >= prob){
+    plant * newPlant = new plant();
+    plants.push_back(newPlant);
+  }
+  if(f2 >= prob){
+    plant * newPlant = new plant();
+    plants.push_back(newPlant);
+  }
+  if(f3 >= prob){
+    plant * newPlant = new plant();
+    plants.push_back(newPlant);
+  }
 }
 
 void writeData(){
@@ -172,6 +192,8 @@ void writeData(){
 
   //file << frames;
   //file << ",";
+  file << cos(2*3.1415*frames/10000)+2;
+  file << ",";
   file << plants.size();
   file << ",";
   file << herb;
