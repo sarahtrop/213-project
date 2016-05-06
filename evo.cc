@@ -292,11 +292,11 @@ void updateCreatures(){
 
       if(colStatus[1]){
         if(creatures[i]->food_source() == 1){
-          creatures[i]->incEnergy((creatures[j]->curr_energy())/2);
+          creatures[i]->incEnergy((creatures[j]->curr_energy()));
           creatures[j]->incEnergy(-10000);
         }
         else{
-          creatures[j]->incEnergy((creatures[i]->curr_energy())/2);
+          creatures[j]->incEnergy((creatures[i]->curr_energy()));
           creatures[i]->incEnergy(-10000);
         }
       }
@@ -506,7 +506,7 @@ void reproduce(creature* c, creature* d) {
   int children = 1;
   int food = c->food_source();
 
-  if(carnMut <= 4){
+  if(carnMut <= 2){
     children = 4;
     food = 1;
   }
