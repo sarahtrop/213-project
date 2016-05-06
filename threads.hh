@@ -33,9 +33,27 @@ std::thread t[MAXTHREADS];
 
 taskQueue_t * q;
 
+pthread_cond_t taskCond;
+
+pthread_mutex_t countTasks;
+pthread_cond_t countCond;
+
+int tasksFinished = 0;
+
+void resetTasks(){
+  pthread_mutex_lock(&countTasks);
+  tasksFinished = 0;
+  pthread_mutex_unlock(&countTasks);
+}
+
 void initTaskQueue(){
   q = (taskQueue_t *)malloc(sizeof(taskQueue_t));
   pthread_mutex_init(&q->lock, NULL);
+  
+  pthread_cond_init(&taskCond, NULL);
+
+  pthread_cond_init(&countCond, NULL);
+  pthread_mutex_init(&countTasks, NULL);
   
   q->head = NULL;
   q->tail = NULL;
@@ -53,6 +71,9 @@ void queueRun(){
     //If the queue is empty
     if(q->head == NULL){
       node = NULL;
+
+      pthread_cond_signal(&countCond);
+      pthread_cond_wait(&taskCond, &q->lock);
     }
     else{
       node = q->head;
@@ -67,6 +88,11 @@ void queueRun(){
 
     if(node != NULL){
       node->task(node->i); //Run task;
+
+      pthread_mutex_lock(&countTasks);
+      ++tasksFinished;
+      pthread_mutex_unlock(&countTasks);
+      
     }
   }
 }
@@ -88,6 +114,7 @@ void addTask(void(*task)(int), int i){
     q->head = node;
   }
 
+  pthread_cond_signal(&taskCond);
   pthread_mutex_unlock(&q->lock);
 }
 

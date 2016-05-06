@@ -84,7 +84,7 @@ public:
   double radius() { return ((double)_size / 255.0) * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS; }
 
   // Get the speed of this creature
-  double speed() { return ((double)_speed/ (2 * FPS)) * pow(((1 -((double)_size / 255)) * 1.5 + .5),2); }
+  double speed() { return ((double)_speed/ (2 * FPS)) * pow(((1 -((double)_size / 255)) * 1.5 + .5),1); }
 
   // Get the current energy of this creature
   double curr_energy() { return (double)_curr_energy; }
@@ -166,7 +166,10 @@ public:
   }
 
   // Increments current energy by specified amount
-  void incEnergy(double add) { _curr_energy = fmin(_max_energy, _curr_energy + add); }
+  void incEnergy(double add) {
+    //printf("added: %f\n",add);
+    _curr_energy = fmin(_max_energy, _curr_energy + add * ((1 - ((double)_energy / 255)) * 1.5 + .5));
+  }
 
   // Decrements energy as time passes
   void decEnergy() {
@@ -260,7 +263,7 @@ public:
   bool canEat(creature * partner){
     bool res = false;
     if(_food_source == 1) {
-      if((double)_size*1.1 >= (double)partner->getTrait(1)) {
+      if((double)_size*1.2 >= (double)partner->getTrait(1)) {
         res = true;
       }
     }

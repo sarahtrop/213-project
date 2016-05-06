@@ -51,6 +51,7 @@ uint8_t new_trait(creature* c, creature* d, int trait);
 bool reproductionSimilarity(creature* c, creature* d);
 unsigned GetTickCount();
 
+
 // List of creatures
 vector<creature*> creatures;
 vector<plant*> plants;
@@ -183,13 +184,18 @@ void drawPlant(bitmap* bmp, plant * p){
 
 // Compute force on all creatures and update their positions
 void updateCreatures(){
+  resetTasks();
+  
   //This updates position and checks for energy level
   for(int i=0; i<creatures.size(); ++i) {
     addTask(&handleTick, i);
-    //handleTick(i);
   }
 
-  //TODO: wait for handleTicks to finish
+  pthread_mutex_lock(&countTasks);
+  while(tasksFinished < creatures.size()){
+    pthread_cond_wait(&countCond, &countTasks);
+  }
+  pthread_mutex_unlock(&countTasks);
 
   //TODO: can we handle collisions in parallel?
   
@@ -205,11 +211,11 @@ void updateCreatures(){
 
       if(colStatus[1]){
         if(creatures[i]->food_source() == 1){
-          creatures[i]->incEnergy((creatures[j]->curr_energy())/5);
+          creatures[i]->incEnergy((creatures[j]->curr_energy())/2);
           creatures[j]->incEnergy(-10000);
         }
         else{
-          creatures[j]->incEnergy((creatures[i]->curr_energy())/5);
+          creatures[j]->incEnergy((creatures[i]->curr_energy())/2);
           creatures[i]->incEnergy(-10000);
         }
       }
@@ -227,6 +233,11 @@ void updateCreatures(){
         }
       }
     }
+
+    if(creatures[i]->curr_energy() <= 0){ // if the creature has no energy
+      creatures.erase(creatures.begin() + i); // die
+      --i;
+      }
   }
 }
 
@@ -240,37 +251,22 @@ void initCreatures() {
     creature * new_creature = new creature(1, 128, 128, 128, 128, 128);
     creatures.push_back(new_creature);
   }
-
-  /*creature * new_creature1 = new creature(0, 128, 128, 200, 128, 128);
-  creatures.push_back(new_creature1);
-
-  creature * new_creature2 = new creature(1, 128, 128, 128, 128, 0);
-  creatures.push_back(new_creature2);*/
   
 }
 
 // Perform the functions needed on each creature each frame
 void handleTick(int i) {
-  //pthread_mutex_lock(&creatures[i]->lock); // lock this creature
-  
-  if(creatures[i]->curr_energy() <= 0){ // if the creature has no energy
-    //pthread_mutex_unlock(&creatures[i]->lock); // unlock
-    creatures.erase(creatures.begin() + i); // die
+  if(!creatures[i]->bouncing()){ // if the creature is not bouncing off another
+    runAway(creatures[i]); // either run away
+    findNearestBuddy(creatures[i]); // or find a buddy
+    findNearestFood(creatures[i]); // or find food
   }
   else{
-    if(!creatures[i]->bouncing()){ // if the creature is not bouncing off another
-      runAway(creatures[i]); // either run away
-      findNearestBuddy(creatures[i]); // or find a buddy
-      findNearestFood(creatures[i]); // or find food
-    }
-    else{
-      creatures[i]->setBouncing(false);
-    }
-    
-    creatures[i]->update(); // update the creatures position and such
-    creatures[i]->decEnergy(); // decrement the energy of the creature
-    //pthread_mutex_unlock(&creatures[i]->lock); // unlock the creature
+    creatures[i]->setBouncing(false);
   }
+    
+  creatures[i]->update(); // update the creatures position and such
+  creatures[i]->decEnergy(); // decrement the energy of the creature
 }
 
 // Finds the nearest food to a creature, and change velocity vector
@@ -323,9 +319,8 @@ void findNearestHerbivore(creature* c) {
   // Find the closest creature, and save it
   for (int i = 0; i < creatures.size(); i++) {
     // Make sure we are eating an herbivore
-    if (creatures[i]->food_source() == 0) {
-      double curr_dist = c->distFromCreature(*creatures[i]);
-      //printf("%f\n", curr_dist);
+    if (creatures[i]->food_source() == 0 && c->canEat(creatures[i])) {
+      double curr_dist = c->distFromCreature(*creatures[i]) - creatures[i]->radius();
       if(curr_dist < minDist){
         minDist = curr_dist;
         closest = creatures[i];
@@ -335,7 +330,6 @@ void findNearestHerbivore(creature* c) {
 
   // If the distance is still vision, we found nothing, so don't reset the vector
   if (minDist < c->vision()) {
-    //printf("%f < %f\n", minDist, c->vision());
     // Now that we have the closest creature for eating,
     // change the creature's velocity vector to go towards that creature
     vec2d cPos = c->pos();
@@ -361,7 +355,7 @@ void runAway(creature* c) {
     creature* carnivore = creatures[i];
     // Make sure we are running from a carnivore
     if (carnivore->food_source() == 1) {
-      double curr_dist = carnivore->distFromCreature(*c);
+      double curr_dist = c->distFromCreature(*carnivore) - creatures[i]->radius();
       if(curr_dist <= minDist){
         away = (away + (c->pos() - carnivore->pos()).normalized()).normalized();
         found = true;
@@ -370,7 +364,7 @@ void runAway(creature* c) {
   }
 
   // If the creature is not us, RUN AWAY
-  if (minDist != c->vision()) { 
+  if (found) { 
     c->setVel(away);
     c->setStatus(0); //Set status to RUN AWAY
   }
@@ -382,9 +376,11 @@ void findNearestBuddy(creature* c) {
   if (c->status() < 1) { // If we are being chased, DON'T FIND A BUDDY
     return;
   }
+
+  double matingDist = c->vision() * 2;
   
   if ((c->curr_energy() / c->max_energy()) >= 0.7) {
-    double minDist = c->vision();
+    double minDist = matingDist;
     creature* closest = (creature *)malloc(sizeof(creature));
     int type = c->food_source();
     
@@ -405,7 +401,7 @@ void findNearestBuddy(creature* c) {
     }
 
     // go towards buddy
-    if (closest->status() > 0 && minDist != c->vision()) { 
+    if (closest->status() > 0 && minDist < matingDist) { 
       vec2d cPos = c->pos();
       vec2d bPos = closest->pos();
       vec2d towardsB = vec2d(bPos.x() - cPos.x(), bPos.y() - cPos.y());
@@ -424,16 +420,27 @@ void reproduce(creature* c, creature* d) {
   // Set the status of the parents back to doing nothing
   c->setStatus(3);
   d->setStatus(3);
-  
-  // Create new baby creature
-  creature * baby = new creature(c->food_source(), new_trait(c, d, 0),
-                                 new_trait(c, d, 1), new_trait(c, d, 2),
-                                 new_trait(c, d, 3), new_trait(c, d, 4));
 
-  baby->print();
+  int carnMut = rand() % 100;
+  int children = 1;
+  int food = c->food_source();
 
-  // Add baby creature to the vector
-  creatures.push_back(baby);
+  if(carnMut <= 4){
+    children = 4;
+    food = 1;
+  }
+
+  for(int i = 0; i < children; ++i){
+    // Create new baby creature
+    creature * baby = new creature(food, new_trait(c, d, 0),
+                                   new_trait(c, d, 1), new_trait(c, d, 2),
+                                   new_trait(c, d, 3), new_trait(c, d, 4));
+
+    //baby->print();
+
+    // Add baby creature to the vector
+    creatures.push_back(baby);
+  }
 
   // Deplete parents energy
   c->halfEnergy();
