@@ -78,6 +78,10 @@ int main(int argc, char** argv) {
   file << "Plants,Herbivores,Carnivores\n";
   file.close();
 
+  file.open("traits.txt", ios::trunc); //Clear File
+  file << "Size,Speed,Energy,Vision\n";
+  file.close();
+
   initCreatures();
   //initPlants();
   initTaskQueue();
@@ -96,6 +100,8 @@ int main(int argc, char** argv) {
     if(prob <= 9){
       plant * newPlant = new plant();
       plants.push_back(newPlant);
+      plant * newPlant1 = new plant();
+      plants.push_back(newPlant1);
     }
     
     //Draw plants
@@ -132,11 +138,25 @@ void writeData(){
   int carn = 0;
   int herb = 0;
 
+  int size = 0;
+  int speed = 0;
+  int energy = 0;
+  int vision = 0;
+
   std::fstream file;
   file.open("data.txt", ios::app);
+
+  std::fstream traits;
+  traits.open("traits.txt", ios::app);
+  
   
   for(int i = 0; i < creatures.size(); ++i){
     creature * c = creatures[i];
+    size += c->getTrait(1);
+    speed += c->getTrait(2);
+    energy += c->getTrait(3);
+    vision += c->getTrait(4);
+    
     if(c->food_source() == 0){
       ++herb;
     }
@@ -144,6 +164,11 @@ void writeData(){
       ++carn;
     }
   }
+
+  size = (double)size / creatures.size();
+  speed = (double)speed / creatures.size();
+  energy = (double)energy / creatures.size();
+  vision = (double)vision / creatures.size();
 
   //file << frames;
   //file << ",";
@@ -155,6 +180,18 @@ void writeData(){
   file << "\n";
 
   file.close();
+
+  traits << size;
+  traits << ",";
+  traits << speed;
+  traits << ",";
+  traits << energy;
+  traits << ",";
+  traits << vision;
+  traits << "\n";
+
+  traits.close();
+
 }
 
 
