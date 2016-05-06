@@ -11,6 +11,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <cmath>
+#include <fstream>
 
 #include "creature.hh"
 #include "gui.hh"
@@ -50,11 +51,14 @@ uint8_t new_trait(creature* c, creature* d, int trait);
 // check if the creatures are similar enough to reproduce
 bool reproductionSimilarity(creature* c, creature* d);
 unsigned GetTickCount();
+void writeData();
 
 
 // List of creatures
 vector<creature*> creatures;
 vector<plant*> plants;
+
+int frames = 0;
 
 int main(int argc, char** argv) {
   // Seed the random number generator
@@ -68,6 +72,11 @@ int main(int argc, char** argv) {
   
   // Render everything using this bitmap
   bitmap bmp(WIDTH, HEIGHT);
+
+  ofstream file;
+  file.open("data.txt", ios::trunc); //Clear File
+  file << "Plants,Herbivores,Carnivores\n";
+  file.close();
 
   initCreatures();
   //initPlants();
@@ -99,9 +108,15 @@ int main(int argc, char** argv) {
       drawCreature(&bmp, creatures[i]);
       creatures[i]->setStatus(3);
     }
+
+    if(frames % 10 == 0){
+      writeData();
+    }
 	
     // Display the rendered frame
     ui.display(bmp);
+    ++frames;
+    
     unsigned int cur_time = GetTickCount();
     unsigned int diff = cur_time - next_tick;
     
@@ -111,6 +126,35 @@ int main(int argc, char** argv) {
   }
   
   return 0;
+}
+
+void writeData(){
+  int carn = 0;
+  int herb = 0;
+
+  std::fstream file;
+  file.open("data.txt", ios::app);
+  
+  for(int i = 0; i < creatures.size(); ++i){
+    creature * c = creatures[i];
+    if(c->food_source() == 0){
+      ++herb;
+    }
+    else{
+      ++carn;
+    }
+  }
+
+  //file << frames;
+  //file << ",";
+  file << plants.size();
+  file << ",";
+  file << herb;
+  file << ",";
+  file << carn;
+  file << "\n";
+
+  file.close();
 }
 
 
