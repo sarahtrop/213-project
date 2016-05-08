@@ -61,6 +61,10 @@ vector<plant*> plants;
 
 int frames = 0;
 
+double thisTime;
+
+const char* fName = "data8.txt";
+
 int main(int argc, char** argv) {
   // Seed the random number generator
   srand(time(NULL));
@@ -75,16 +79,11 @@ int main(int argc, char** argv) {
   bitmap bmp(WIDTH, HEIGHT);
 
   ofstream file;
-  file.open("data.txt", ios::trunc); //Clear File
-  file << "Plant Generation,Plants,Herbivores,Carnivores\n";
-  file.close();
-
-  file.open("traits.txt", ios::trunc); //Clear File
-  file << "Size,Speed,Energy,Vision\n";
+  file.open(fName, ios::trunc); //Clear File
+  file << "Plant Generation,Plants,Herbivores,Carnivores,ProcessSpeed,Size,Speed,Energy,Vision\n";
   file.close();
 
   initCreatures();
-  //initPlants();
   initTaskQueue();
 
   unsigned int next_tick;
@@ -112,6 +111,7 @@ int main(int argc, char** argv) {
 
     if(frames % 10 == 0){
       writeData();
+      printf("%d\n", frames);
     }
 	
     // Display the rendered frame
@@ -130,9 +130,7 @@ int main(int argc, char** argv) {
 }
 
 void generatePlants(){
-  double rawPlants = cos(2*3.1415*frames/10000)+2;
-
-  printf("%f\n", rawPlants);
+  double rawPlants = 1.25*cos(2*3.1415*frames/10000)+1.75;
 
   int f1 = rawPlants * 1000;
   int f2 = (rawPlants - 1) * 1000;
@@ -164,11 +162,7 @@ void writeData(){
   int vision = 0;
 
   std::fstream file;
-  file.open("data.txt", ios::app);
-
-  std::fstream traits;
-  traits.open("traits.txt", ios::app);
-  
+  file.open(fName, ios::app); 
   
   for(int i = 0; i < creatures.size(); ++i){
     creature * c = creatures[i];
@@ -190,8 +184,6 @@ void writeData(){
   energy = (double)energy / creatures.size();
   vision = (double)vision / creatures.size();
 
-  //file << frames;
-  //file << ",";
   file << cos(2*3.1415*frames/10000)+2;
   file << ",";
   file << plants.size();
@@ -199,20 +191,19 @@ void writeData(){
   file << herb;
   file << ",";
   file << carn;
+  file << ",";
+  file << thisTime;
+  file << ",";
+  file << size;
+  file << ",";
+  file << speed;
+  file << ",";
+  file << energy;
+  file << ",";
+  file << vision;
   file << "\n";
 
   file.close();
-
-  traits << size;
-  traits << ",";
-  traits << speed;
-  traits << ",";
-  traits << energy;
-  traits << ",";
-  traits << vision;
-  traits << "\n";
-
-  traits.close();
 
 }
 
@@ -288,7 +279,12 @@ void drawPlant(bitmap* bmp, plant * p){
 // Compute force on all creatures and update their positions
 void updateCreatures(){
   resetTasks();
-  
+
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+
+  double cur_time = (tv.tv_sec * 1000.0) + (tv.tv_usec / 1000.0);//GetTickCount();
+    
   //This updates position and checks for energy level
   for(int i=0; i<creatures.size(); ++i) {
     addTask(&handleTick, i);
@@ -300,7 +296,12 @@ void updateCreatures(){
   }
   pthread_mutex_unlock(&countTasks);
 
-  //TODO: can we handle collisions in parallel?
+  
+  gettimeofday(&tv, NULL);
+
+  double end_time = (tv.tv_sec * 1000.0) + (tv.tv_usec / 1000.0);//GetTickCount();
+
+  thisTime = end_time - cur_time;
   
   //This checks for collisions
   for(int i=0; i<creatures.size(); ++i) {
@@ -457,7 +458,7 @@ void runAway(creature* c) {
   for (int i = 0; i < creatures.size(); i++) {
     creature* carnivore = creatures[i];
     // Make sure we are running from a carnivore
-    if (carnivore->food_source() == 1) {
+    if (carnivore->food_source() == 1 && carnivore->canEat(c)) {
       double curr_dist = c->distFromCreature(*carnivore) - creatures[i]->radius();
       if(curr_dist <= minDist){
         away = (away + (c->pos() - carnivore->pos()).normalized()).normalized();
@@ -528,7 +529,7 @@ void reproduce(creature* c, creature* d) {
   int children = 1;
   int food = c->food_source();
 
-  if(carnMut <= 2){
+  if(carnMut <= 1){
     children = 4;
     food = 1;
   }
@@ -596,7 +597,7 @@ uint8_t new_trait(creature* c, creature* d, int trait) {
 bool reproductionSimilarity(creature* c, creature* d) {
   int count = 0;
   
-  for (int i = 0; i < 5; i++) { // iterate over all 5 traits
+  for (int i = 1; i < 5; i++) { // iterate over all 4 traits
     uint8_t p1 = c->getTrait(i);
     uint8_t p2 = d->getTrait(i);
     for (int j = 0; j < 8; j++) { // iterate over bits in trait
@@ -622,5 +623,5 @@ unsigned GetTickCount()
   if(gettimeofday(&tv, NULL) != 0)
     return 0;
 
-  return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+  return (tv.tv_sec * 1000.0) + (tv.tv_usec / 1000.0);
 }

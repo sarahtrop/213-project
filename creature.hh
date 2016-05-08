@@ -157,7 +157,7 @@ public:
 
   //Metabolism directly proportional to the trait values 
   void setMetabolism(){
-    _metabolism = pow(((double)(_vision + _size + _speed) / (255*3)) * 1.5 + .5, 2);
+    _metabolism = pow(((double)(_vision + _size + _speed) / (255*3)) * 1.5 + .5, 1);
   }
 
   // Increments current energy when food is eaten (inversely proportional to _energy)
