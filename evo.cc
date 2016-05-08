@@ -111,7 +111,6 @@ int main(int argc, char** argv) {
 
     if(frames % 10 == 0){
       writeData();
-      printf("%d\n", frames);
     }
 	
     // Display the rendered frame
@@ -313,11 +312,13 @@ void updateCreatures(){
         reproduce(creatures[i], creatures[j]);
       }
 
+      // If the status is set to eat another creature
       if(colStatus[1]){
         if(creatures[i]->food_source() == 1){
           creatures[i]->incEnergy((creatures[j]->curr_energy()));
           creatures[j]->incEnergy(-10000);
         }
+        // otherwise
         else{
           creatures[j]->incEnergy((creatures[i]->curr_energy()));
           creatures[i]->incEnergy(-10000);
@@ -539,8 +540,6 @@ void reproduce(creature* c, creature* d) {
     creature * baby = new creature(food, new_trait(c, d, 0),
                                    new_trait(c, d, 1), new_trait(c, d, 2),
                                    new_trait(c, d, 3), new_trait(c, d, 4));
-
-    //baby->print();
 
     // Add baby creature to the vector
     creatures.push_back(baby);
