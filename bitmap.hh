@@ -1,3 +1,6 @@
+/* bitmap.hh taken from galaxy lab written by Charlie Curtsinger for CSC-213 *
+ * https://github.com/grinnell-cs/213-galaxy/blob/master/bitmap.hh           */
+
 #if !defined(BITMAP_HH)
 #define BITMAP_HH
 

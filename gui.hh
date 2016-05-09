@@ -1,3 +1,5 @@
+/*gui.hh taken from galaxy lab written by Charlie Curtsinger for CSC-213*/
+
 #if !defined(GUI_HH)
 #define GUI_HH
 

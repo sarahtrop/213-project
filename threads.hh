@@ -1,3 +1,7 @@
+/* The code structure is from kottkech17 & leejeungs' work on galaxy lab  *
+ * https://github.com/kottkech/213-galaxy/blob/master/main.cc             *
+ */
+
 #if !defined(THREADS_HH)
 #define THREADS_HH
 
@@ -8,8 +12,8 @@
 
 #define MAXTHREADS 8
 
-//code structure from kottkech17 & leejeung galaxy lab
 
+//Takes from the task queue and runs the jobs it finds there.
 void queueRun();
 
 //Struct for arbitrary tasks to be fed into the thread pool
@@ -40,19 +44,20 @@ pthread_cond_t countCond;
 
 int tasksFinished = 0;
 
+//Reset task by set taskFinished back to 0.
 void resetTasks(){
   pthread_mutex_lock(&countTasks);
   tasksFinished = 0;
   pthread_mutex_unlock(&countTasks);
 }
-
+//Initializes task queue by instatiating the queue locks and starting the threads.
 void initTaskQueue(){
   q = (taskQueue_t *)malloc(sizeof(taskQueue_t));
   pthread_mutex_init(&q->lock, NULL);
   
   pthread_cond_init(&taskCond, NULL);
-
   pthread_cond_init(&countCond, NULL);
+  
   pthread_mutex_init(&countTasks, NULL);
   
   q->head = NULL;
@@ -63,6 +68,7 @@ void initTaskQueue(){
   }
 }
 
+//Takes from the task queue and runs the jobs it finds there.
 void queueRun(){
   taskNode_t * node = NULL;
   while(1){
@@ -97,6 +103,7 @@ void queueRun(){
   }
 }
 
+//Add task to the queue
 void addTask(void(*task)(int), int i){
   taskNode_t * node = (taskNode_t *)malloc(sizeof(taskNode_t));
   node->task = task;

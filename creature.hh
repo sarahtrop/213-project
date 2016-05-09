@@ -1,4 +1,6 @@
-//vec2d.hh taken from galaxy lab written by Charlie Curtsinger
+/* creature.hh based on 'star.hh' from galaxy lab written by Charlie Curtsinger     *
+ * for CSC-213.                                                                     *
+ * https://github.com/grinnell-cs/213-galaxy/blob/master/star.hh                    */
 
 #if !defined(CREATURE_HH)
 #define CREATURE_HH

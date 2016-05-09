@@ -1,9 +1,11 @@
+/* vec2d.hh taken from galaxy lab written by Charlie Curtsinger for CSC-213 *
+ * https://github.com/grinnell-cs/213-galaxy/blob/master/vec2d.hh           */
+
 #ifndef VEC2D_HH
 #define VEC2D_HH
 
 //vec2d.hh
 #include <cmath>
-
 #include "bitmap.hh"
 
 

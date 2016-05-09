@@ -1,5 +1,3 @@
-//gui.hh taken from galaxy lab written by Charlie Curtsinger
-
 #include <cstdio>
 #include <stdint.h>
 #include <ctype.h>
@@ -44,14 +42,23 @@ void runAway(creature* c);
 
 // Find a buddy for reproduction
 void findNearestBuddy(creature* c);
+
 // Reproduce
 void reproduce(creature* c, creature* d);
+
 // Create new trait for reproduction
 uint8_t new_trait(creature* c, creature* d, int trait);
+
 // check if the creatures are similar enough to reproduce
 bool reproductionSimilarity(creature* c, creature* d);
+
+//Get elapsed time in miliseconds
 unsigned GetTickCount();
+
+//Write data into the file for the performance of creatures.
 void writeData();
+
+//Generate plants 
 void generatePlants();
 
 
@@ -128,6 +135,7 @@ int main(int argc, char** argv) {
   return 0;
 }
 
+//Plant generation
 void generatePlants(){
   double rawPlants = 1.25*cos(2*3.1415*frames/10000)+1.75;
 
@@ -151,6 +159,7 @@ void generatePlants(){
   }
 }
 
+//Write data into the file for the performance of creatures.
 void writeData(){
   int carn = 0;
   int herb = 0;
@@ -183,7 +192,7 @@ void writeData(){
   energy = (double)energy / creatures.size();
   vision = (double)vision / creatures.size();
 
-  file << cos(2*3.1415*frames/10000)+2;
+  file << 1.25*cos(2*3.1415*frames/10000)+1.75;
   file << ",";
   file << plants.size();
   file << ",";
@@ -338,8 +347,8 @@ void updateCreatures(){
         }
       }
     }
-
-    if(creatures[i]->curr_energy() <= 0){ // if the creature has no energy
+    // if the creature has no energy
+    if(creatures[i]->curr_energy() <= 0){ 
       creatures.erase(creatures.begin() + i); // die
       --i;
       }
@@ -445,6 +454,7 @@ void findNearestHerbivore(creature* c) {
   }
 }
 
+//Creature run away from the carnivore 
 void runAway(creature* c) {
   // If you are a carnivore, you never have to run away
   if (c->food_source() == 1) { 
@@ -458,6 +468,7 @@ void runAway(creature* c) {
   // Find the closest creature, and save it
   for (int i = 0; i < creatures.size(); i++) {
     creature* carnivore = creatures[i];
+    
     // Make sure we are running from a carnivore
     if (carnivore->food_source() == 1 && carnivore->canEat(c)) {
       double curr_dist = c->distFromCreature(*carnivore) - creatures[i]->radius();
